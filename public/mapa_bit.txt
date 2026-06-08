@@ -1,0 +1,12 @@
+{
+  "metadata": { "city": "Palmas", "center": "Geodesic" },
+  "chunks": {
+    "node_0": { "bounds": { "x": 0, "y": 0, "z": 0 } },
+    "node_1": { "bounds": { "x": 50, "y": 0, "z": 50 } },
+    "node_2": { "bounds": { "x": -50, "y": 0, "z": -50 } },
+    "node_3": { "bounds": { "x": 100, "y": 0, "z": 0 } },
+    "node_4": { "bounds": { "x": 0, "y": 0, "z": 100 } },
+    "node_5": { "bounds": { "x": -100, "y": 0, "z": 20 } },
+    "node_6": { "bounds": { "x": 30, "y": 0, "z": -80 } }
+  }
+}
