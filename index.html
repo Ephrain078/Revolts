@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metaverse Grid</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Motor Voxel Neon</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #020205; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body>
-    <div id="ui-overlay">
-        <div id="stats">Nível: <span id="level">1</span> | Blocos: <span id="blocks">0</span></div>
-    </div>
-    <canvas id="gameCanvas"></canvas>
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
