@@ -2,336 +2,644 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-const N = 96, H = N / 2;
-const COLORS = [0x00f0ff, 0xff7a00, 0xff2bd6, 0xffe600];
-const SPAWNS = [[-34, -34, 1, 0], [34, 34, -1, 0], [-34, 34, 0, -1], [34, -34, 0, 1]];
+/* ═══════════════════════════════════════════════════════════════
+   CONFIGURAÇÃO GLOBAL
+   ═══════════════════════════════════════════════════════════════ */
+const CFG = {
+  chunkSize: 100,
+  chunkRes: 20,
+  viewDist: 4,
+  gridSize: 5,
+  fogColor: 0x000208,
+  fogDensity: 0.007,
+  minSpeed: 6,
+  cruiseSpeed: 16,
+  maxSpeed: 46,
+  turnDuration: 0.16,
+  trailLength: 220,
+};
 
-const $ = id => document.getElementById(id);
-const lerp = (a, b, t) => a + (b - a) * t;
-const inb = (x, z) => x >= 0 && z >= 0 && x < N && z < N;
-const wc = g => g - H + .5;
+/* ═══════════════════════════════════════════════════════════════
+   NOISE (VALUE NOISE 2D, MULTI-OITAVA)
+   ═══════════════════════════════════════════════════════════════ */
+function hash2(x, y) {
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+  return s - Math.floor(s);
+}
+function valueNoise(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const fx = x - ix, fy = y - iy;
+  const ux = fx * fx * (3 - 2 * fx);
+  const uy = fy * fy * (3 - 2 * fy);
+  const a = hash2(ix, iy);
+  const b = hash2(ix + 1, iy);
+  const c = hash2(ix, iy + 1);
+  const d = hash2(ix + 1, iy + 1);
+  return a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + d * ux * uy;
+}
 
-/* ---------- Render & Cena ---------- */
-const BG = 0x02050a;
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
+function terrainHeight(x, z) {
+  let h = 0;
+  h += valueNoise(x * 0.0075, z * 0.0075) * 34;
+  h += valueNoise(x * 0.021, z * 0.021) * 11;
+  h += valueNoise(x * 0.058, z * 0.058) * 3.2;
+  h += valueNoise(x * 0.17, z * 0.17) * 0.7;
+  return h - 24;
+}
+
+function zoneColorAt(x, z) {
+  const t = valueNoise(x * 0.0012 + 32.1, z * 0.0012 + 11.7);
+  const t2 = valueNoise(x * 0.0005 + 100, z * 0.0005 + 200);
+  const cyan = new THREE.Color(0x00f0ff);
+  const magenta = new THREE.Color(0xff00d0);
+  const amber = new THREE.Color(0xffa020);
+  const base = cyan.clone().lerp(magenta, t);
+  return base.lerp(amber, Math.max(0, (t2 - 0.65)) * 2);
+}
+
+function zoneNameAt(x, z) {
+  const t = valueNoise(x * 0.0012 + 32.1, z * 0.0012 + 11.7);
+  if (t < 0.3) return 'Ciano';
+  if (t < 0.55) return 'Ciano-Magenta';
+  if (t < 0.75) return 'Magenta';
+  return 'Âmbar';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDERER / SCENE / CAMERA
+   ═══════════════════════════════════════════════════════════════ */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: false,
+  powerPreference: 'high-performance',
+  stencil: false,
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(BG);
-scene.fog = new THREE.FogExp2(BG, .011);
+scene.fog = new THREE.FogExp2(CFG.fogColor, CFG.fogDensity);
+scene.background = new THREE.Color(CFG.fogColor);
 
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .1, 800);
+const camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.5, 900);
+camera.position.set(0, 12, 14);
+camera.lookAt(0, 0, 0);
+
+/* ─── Iluminação ─── */
+scene.add(new THREE.AmbientLight(0x335577, 0.55));
+scene.add(new THREE.HemisphereLight(0x00ccee, 0xff00aa, 0.35));
+const dirLight = new THREE.DirectionalLight(0x88ffff, 0.6);
+dirLight.position.set(80, 140, 60);
+scene.add(dirLight);
+
+/* ─── Pós-processamento (Bloom) ─── */
 const composer = new EffectComposer(renderer);
+composer.setSize(window.innerWidth, window.innerHeight);
 composer.addPass(new RenderPass(scene, camera));
-composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .9, .5, .5));
-composer.addPass(new OutputPass());
+const bloom = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.15,
+  0.55,
+  0.35
+);
+composer.addPass(bloom);
 
-scene.add(new THREE.GridHelper(600, 600, 0x00f0ff, 0x053340));
+/* ═══════════════════════════════════════════════════════════════
+   SHADER DO TERRENO (GRID NEON + FOG)
+   ═══════════════════════════════════════════════════════════════ */
+const terrainVert = /* glsl */ `
+  attribute vec3 zoneColor;
+  varying vec3 vWorldPos;
+  varying vec3 vNormalW;
+  varying vec3 vZoneColor;
+  void main() {
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vWorldPos = wp.xyz;
+    vNormalW = normalize(mat3(modelMatrix) * normal);
+    vZoneColor = zoneColor;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`;
 
-const cageGeo = new THREE.BoxGeometry(N, 4, N);
-const cage = new THREE.LineSegments(new THREE.EdgesGeometry(cageGeo), new THREE.LineBasicMaterial({ color: 0x00f0ff }));
-cage.position.y = 2;
-const cageFill = new THREE.Mesh(cageGeo, new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: .06, side: THREE.BackSide, depthWrite: false }));
-cageFill.position.y = 2;
-scene.add(cage, cageFill);
+const terrainFrag = /* glsl */ `
+  precision highp float;
+  uniform float uGridSize;
+  uniform float uTime;
+  uniform vec3 uFogColor;
+  uniform float uFogDensity;
+  varying vec3 vWorldPos;
+  varying vec3 vNormalW;
+  varying vec3 vZoneColor;
 
-/* ---------- Ocupação e Mapa ---------- */
-const occ = new Uint8Array(N * N);
-const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-const boxEdges = new THREE.EdgesGeometry(boxGeo);
-const bldMat = new THREE.MeshBasicMaterial({ color: 0x07131f });
-const edgeMat = new THREE.LineBasicMaterial({ color: 0x00b8d4 });
+  float gridLine(float coord, float spacing) {
+    float f = abs(fract(coord / spacing) - 0.5);
+    return smoothstep(0.47, 0.5, f);
+  }
 
-function addBuilding(cx, cz, w, d, h) {
-  const x0 = cx - (w >> 1), z0 = cz - (d >> 1);
-  if (x0 < 1 || z0 < 1 || x0 + w > N - 1 || z0 + d > N - 1) return;
-  for (let z = z0; z < z0 + d; z++) for (let x = x0; x < x0 + w; x++) occ[z * N + x] = 255;
+  void main() {
+    vec2 xz = vWorldPos.xz;
+    float g1 = max(gridLine(xz.x, uGridSize), gridLine(xz.y, uGridSize));
+    float g5 = max(gridLine(xz.x, uGridSize * 5.0), gridLine(xz.y, uGridSize * 5.0));
+
+    // base muito escura (asfalto digital)
+    vec3 color = vec3(0.004, 0.008, 0.018);
+
+    // pulso nas linhas (leve)
+    float pulse = 0.85 + 0.15 * sin(uTime * 2.0 + xz.x * 0.05 + xz.y * 0.05);
+
+    // emissão do grid
+    vec3 emissive = vZoneColor * (g1 * 1.6 * pulse + g5 * 3.2 * pulse);
+
+    // brilho nas encostas
+    float slope = 1.0 - abs(vNormalW.y);
+    emissive += vZoneColor * slope * 0.35;
+
+    color += emissive;
+
+    // fog exponencial
+    float dist = length(vWorldPos - cameraPosition);
+    float fog = 1.0 - exp(-uFogDensity * uFogDensity * dist * dist);
+    color = mix(color, uFogColor, clamp(fog, 0.0, 1.0));
+
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
+const terrainMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    uGridSize: { value: CFG.gridSize },
+    uTime: { value: 0 },
+    uFogColor: { value: new THREE.Color(CFG.fogColor) },
+    uFogDensity: { value: CFG.fogDensity },
+  },
+  vertexShader: terrainVert,
+  fragmentShader: terrainFrag,
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   SISTEMA DE CHUNKS INFINITOS
+   ═══════════════════════════════════════════════════════════════ */
+const chunks = new Map(); // key = "cx,cz" -> { mesh }
+
+function buildChunkGeometry(cx, cz) {
+  const size = CFG.chunkSize;
+  const res = CFG.chunkRes;
+  const geo = new THREE.PlaneGeometry(size, size, res, res);
+  geo.rotateX(-Math.PI / 2);
+
+  const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const baseX = cx * size + size / 2;
+  const baseZ = cz * size + size / 2;
+
+  for (let i = 0; i < pos.count; i++) {
+    const wx = pos.getX(i) + baseX;
+    const wz = pos.getZ(i) + baseZ;
+    pos.setX(i, wx);
+    pos.setZ(i, wz);
+    pos.setY(i, terrainHeight(wx, wz));
+
+    const c = zoneColorAt(wx, wz);
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
+  }
+
+  geo.setAttribute('zoneColor', new THREE.BufferAttribute(colors, 3));
+  geo.computeVertexNormals();
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+function createChunk(cx, cz) {
+  const geo = buildChunkGeometry(cx, cz);
+  const mesh = new THREE.Mesh(geo, terrainMaterial);
+  mesh.frustumCulled = true;
+  mesh.matrixAutoUpdate = false;
+  mesh.updateMatrix();
+  scene.add(mesh);
+  return { mesh };
+}
+
+function updateChunks(px, pz) {
+  const pcx = Math.floor(px / CFG.chunkSize);
+  const pcz = Math.floor(pz / CFG.chunkSize);
+  const needed = new Set();
+  const d = CFG.viewDist;
+
+  for (let dx = -d; dx <= d; dx++) {
+    for (let dz = -d; dz <= d; dz++) {
+      // Círculo aproximado para economizar chunks
+      if (dx * dx + dz * dz > d * d + d) continue;
+      needed.add(`${pcx + dx},${pcz + dz}`);
+    }
+  }
+
+  // remover chunks fora de alcance
+  for (const [key, chunk] of chunks) {
+    if (!needed.has(key)) {
+      scene.remove(chunk.mesh);
+      chunk.mesh.geometry.dispose();
+      chunks.delete(key);
+    }
+  }
+
+  // criar faltantes
+  for (const key of needed) {
+    if (!chunks.has(key)) {
+      const [cx, cz] = key.split(',').map(Number);
+      chunks.set(key, createChunk(cx, cz));
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT CYCLE (MOTO DE LUZ)
+   ═══════════════════════════════════════════════════════════════ */
+function buildLightCycle() {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(boxGeo, bldMat), new THREE.LineSegments(boxEdges, edgeMat));
-  g.scale.set(w, h, d);
-  g.position.set(wc(x0) + (w - 1) / 2, h / 2, wc(z0) + (d - 1) / 2);
-  scene.add(g);
-}
 
-const ready = (async () => {
-  let data;
-  try {
-    const res = await fetch('public/mapa_bit.json');
-    data = await res.json();
-  } catch (_) {
-    data = {
-      chunks: {
-        node_0: { bounds: { x: 0, z: 0 } },
-        node_1: { bounds: { x: 50, z: 50 } },
-        node_2: { bounds: { x: -50, z: -50 } },
-        node_3: { bounds: { x: 100, z: 0 } },
-        node_4: { bounds: { x: 0, z: 100 } },
-        node_5: { bounds: { x: -100, z: 20 } },
-        node_6: { bounds: { x: 30, z: -80 } }
-      }
-    };
-  }
-  Object.values(data.chunks).forEach((c, i) => {
-    const gx = Math.round(c.bounds.x / 2.2) + H;
-    const gz = Math.round(c.bounds.z / 2.2) + H;
-    addBuilding(gx, gz, 3, 3, 6 + ((i * 37 + 11) % 9));
-    addBuilding(gx + 5, gz + 2, 2, 2, 3 + (i % 4));
-    addBuilding(gx - 4, gz - 3, 2, 2, 4 + (i % 3));
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0x080812,
+    metalness: 0.95,
+    roughness: 0.25,
+    emissive: 0x001a22,
+    emissiveIntensity: 0.4,
   });
-})();
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+  const glowMagenta = new THREE.MeshBasicMaterial({ color: 0xff00d0 });
 
-/* ---------- Partículas ---------- */
-const P = 500;
-const pPos = new Float32Array(P * 3).fill(-1000);
-const pCol = new Float32Array(P * 3);
-const pVel = new Float32Array(P * 3);
-const pLife = new Float32Array(P);
-const pGeo = new THREE.BufferGeometry();
-pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
-const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: .6, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
-points.frustumCulled = false;
-scene.add(points);
+  // corpo
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 2.6), bodyMat);
+  body.position.y = 0.65;
+  g.add(body);
 
-let pi = 0;
-function burst(x, z, color) {
-  const c = new THREE.Color(color);
-  for (let n = 0; n < 60; n++) {
-    const i = pi++ % P;
-    pPos.set([x, .6, z], i * 3);
-    pVel.set([(Math.random() - .5) * 16, 2 + Math.random() * 9, (Math.random() - .5) * 16], i * 3);
-    pCol.set([c.r, c.g, c.b], i * 3);
-    pLife[i] = 1;
-  }
+  // carenagem dianteira
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.35, 0.8), bodyMat);
+  nose.position.set(0, 0.55, 1.55);
+  g.add(nose);
+
+  // rodas (cilindros no eixo X)
+  const wheelGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.28, 20);
+  wheelGeo.rotateZ(Math.PI / 2);
+
+  const w1 = new THREE.Mesh(wheelGeo, bodyMat);
+  w1.position.set(0, 0.55, 1.0);
+  g.add(w1);
+
+  const w2 = new THREE.Mesh(wheelGeo, bodyMat);
+  w2.position.set(0, 0.55, -1.0);
+  g.add(w2);
+
+  // aros de neon
+  const ringGeo = new THREE.TorusGeometry(0.55, 0.035, 8, 28);
+  ringGeo.rotateY(Math.PI / 2);
+
+  const r1 = new THREE.Mesh(ringGeo, glowMat);
+  r1.position.copy(w1.position);
+  g.add(r1);
+
+  const r2 = new THREE.Mesh(ringGeo, glowMagenta);
+  r2.position.copy(w2.position);
+  g.add(r2);
+
+  // piloto
+  const rider = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.75, 0.55), bodyMat);
+  rider.position.set(0, 1.35, -0.15);
+  g.add(rider);
+
+  // listras laterais
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 2.6), glowMat);
+  strip.position.set(0.47, 0.65, 0);
+  g.add(strip);
+
+  const strip2 = strip.clone();
+  strip2.material = glowMagenta;
+  strip2.position.x = -0.47;
+  g.add(strip2);
+
+  // farol
+  const headlight = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  headlight.position.set(0, 0.7, 1.95);
+  g.add(headlight);
+
+  return g;
 }
 
-function stepParticles(dt) {
-  for (let i = 0; i < P; i++) {
-    if (pLife[i] <= 0) continue;
-    const k = i * 3;
-    pPos[k] += pVel[k] * dt;
-    pPos[k + 1] += pVel[k + 1] * dt;
-    pPos[k + 2] += pVel[k + 2] * dt;
-    pVel[k + 1] -= 18 * dt;
-    if (pPos[k + 1] < 0) { pPos[k + 1] = 0; pVel[k + 1] *= -.4; }
-    if ((pLife[i] -= dt * .9) <= 0) pPos[k + 1] = -1000;
-  }
-  pGeo.attributes.position.needsUpdate = true;
-  pGeo.attributes.color.needsUpdate = true;
-}
+const bike = buildLightCycle();
+scene.add(bike);
 
-/* ---------- Entidade Moto ---------- */
-const WALL_CAP = 3000;
-class Bike {
-  constructor(id, color, isPlayer) {
-    Object.assign(this, { id, color, isPlayer, alive: false, yaw: 0, gx: 0, gz: 0, pgx: 0, pgz: 0 });
-    this.mesh = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(.55, .45, 1.5), new THREE.MeshBasicMaterial({ color: 0x04080d }));
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(.6, .12, 1.55), new THREE.MeshBasicMaterial({ color }));
-    strip.position.y = .3;
-    this.mesh.add(body, strip);
-    this.mesh.visible = false;
-
-    this.walls = new THREE.InstancedMesh(boxGeo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .85 }), WALL_CAP);
-    this.walls.frustumCulled = false;
-    this.walls.count = 0;
-    scene.add(this.mesh, this.walls);
-  }
-
-  reset(x, z, dx, dz) {
-    this.gx = this.pgx = H + x;
-    this.gz = this.pgz = H + z;
-    this.dir = this.lastDir = { x: dx, z: dz };
-    this.nextDir = { x: dx, z: dz };
-    this.yaw = Math.atan2(dx, dz);
-    this.alive = true;
-    this.walls.count = 0;
-    this.mesh.visible = true;
-    occ[this.gz * N + this.gx] = this.id;
-    this.wall(this.dir);
-  }
-
-  wall(d) {
-    const m = new THREE.Matrix4().compose(
-      new THREE.Vector3(wc(this.gx), .6, wc(this.gz)),
-      new THREE.Quaternion(),
-      new THREE.Vector3(d.x ? 1.02 : .16, 1.2, d.z ? 1.02 : .16)
-    );
-    if (this.walls.count < WALL_CAP) this.walls.setMatrixAt(this.walls.count++, m);
-    this.walls.instanceMatrix.needsUpdate = true;
-  }
-
-  free(d) {
-    let n = 0, x = this.gx + d.x, z = this.gz + d.z;
-    while (n < 16 && inb(x, z) && occ[z * N + x] === 0) { n++; x += d.x; z += d.z; }
-    return n;
-  }
-
-  steer() {
-    if (this.isPlayer) {
-      if (this.nextDir.x !== -this.dir.x || this.nextDir.z !== -this.dir.z) {
-        this.dir = this.nextDir;
-      }
-      return;
-    }
-    const L = { x: this.dir.z, z: -this.dir.x };
-    const R = { x: -this.dir.z, z: this.dir.x };
-    const ahead = this.free(this.dir);
-    const fl = this.free(L);
-    const fr = this.free(R);
-
-    if (ahead <= 3 || (Math.random() < .012 && Math.max(fl, fr) > 8)) {
-      if (fl === 0 && fr === 0) return;
-      this.dir = fl === fr ? (Math.random() < .5 ? L : R) : fl > fr ? L : R;
-    }
-  }
-
-  advance() {
-    this.pgx = this.gx; this.pgz = this.gz;
-    this.gx = this.nx; this.gz = this.nz;
-    occ[this.gz * N + this.gx] = this.id;
-    if (this.lastDir.x !== this.dir.x || this.lastDir.z !== this.dir.z) this.wall(this.lastDir);
-    this.wall(this.dir);
-    this.lastDir = this.dir;
-  }
-
-  kill() {
-    this.alive = false;
-    this.mesh.visible = false;
-    this.walls.count = 0;
-    for (let i = 0; i < occ.length; i++) if (occ[i] === this.id) occ[i] = 0;
-    burst(wc(this.gx), wc(this.gz), this.color);
-  }
-
-  update(alpha, dt) {
-    if (!this.alive) return;
-    this.mesh.position.set(lerp(wc(this.pgx), wc(this.gx), alpha), .35, lerp(wc(this.pgz), wc(this.gz), alpha));
-    let dy = Math.atan2(this.dir.x, this.dir.z) - this.yaw;
-    dy = Math.atan2(Math.sin(dy), Math.cos(dy));
-    this.yaw += dy * Math.min(1, dt * 14);
-    this.mesh.rotation.y = this.yaw;
-  }
-}
-
-const bikes = COLORS.map((c, i) => new Bike(i + 1, c, i === 0));
-const player = bikes[0];
-
-/* ---------- Estado do Jogo ---------- */
-let state = 'menu', acc = 0, time = 0, kills = 0, snap = false, last = performance.now();
-const tickDur = () => Math.max(.06, .1 - time * .0004);
-const score = () => Math.floor(time * 10) + kills * 100;
-let best = 0;
-try { best = +localStorage.getItem('revolts_best') || 0; } catch (_) {}
-
-function tick() {
-  const live = bikes.filter(b => b.alive), dead = new Set();
-  live.forEach(b => { b.steer(); b.nx = b.gx + b.dir.x; b.nz = b.gz + b.dir.z; });
-  live.forEach(b => { if (!inb(b.nx, b.nz) || occ[b.nz * N + b.nx] !== 0) dead.add(b); });
-  for (let i = 0; i < live.length; i++) {
-    for (let j = i + 1; j < live.length; j++) {
-      if (live[i].nx === live[j].nx && live[i].nz === live[j].nz) {
-        dead.add(live[i]); dead.add(live[j]);
-      }
-    }
-  }
-  live.forEach(b => { if (!dead.has(b)) b.advance(); });
-  dead.forEach(b => { b.kill(); if (!b.isPlayer) kills++; });
-
-  const rivals = bikes.filter(b => !b.isPlayer && b.alive).length;
-  if (!player.alive) endGame(false);
-  else if (!rivals) endGame(true);
-}
-
-function endGame(win) {
-  state = 'over';
-  const s = score() + (win ? 500 : 0);
-  if (s > best) { best = s; try { localStorage.setItem('revolts_best', best); } catch (_) {} }
-  setTimeout(() => show(win ? 'VITÓRIA' : 'DEREZZED', `Pontuação: ${s}<br>Recorde: ${best}`, 'JOGAR DE NOVO'), 800);
-}
-
-function show(t, msg, btn) {
-  $('ttl').textContent = t;
-  $('msg').innerHTML = msg;
-  $('go').textContent = btn;
-  $('screen').classList.remove('hide');
-}
-
-async function start() {
-  await ready;
-  for (let i = 0; i < occ.length; i++) if (occ[i] !== 255) occ[i] = 0;
-  bikes.forEach((b, i) => b.reset(...SPAWNS[i]));
-  state = 'play'; acc = time = kills = 0; snap = true;
-  $('screen').classList.add('hide');
-}
-
-/* ---------- Entrada de Controles ---------- */
-function setDir(dx, dz) {
-  if (state !== 'play') return;
-  player.nextDir = { x: dx, z: dz };
-}
-
-addEventListener('keydown', e => {
-  const k = e.key.toLowerCase();
-  if (k === 'w' || k === 'arrowup') setDir(0, -1);
-  else if (k === 's' || k === 'arrowdown') setDir(0, 1);
-  else if (k === 'a' || k === 'arrowleft') setDir(-1, 0);
-  else if (k === 'd' || k === 'arrowright') setDir(1, 0);
-  else if (k === 'enter' && state !== 'play') start();
+/* ═══════════════════════════════════════════════════════════════
+   RASTRO (TRAIL) DE NEON
+   ═══════════════════════════════════════════════════════════════ */
+const trailPts = new Float32Array(CFG.trailLength * 3);
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPts, 3));
+trailGeo.setDrawRange(0, 0);
+const trailMat = new THREE.LineBasicMaterial({
+  color: 0x00f0ff,
+  transparent: true,
+  opacity: 0.85,
 });
+const trailLine = new THREE.Line(trailGeo, trailMat);
+trailLine.frustumCulled = false;
+scene.add(trailLine);
 
-const bindBtn = (id, dx, dz) => {
-  const el = $(id);
-  if (!el) return;
-  el.addEventListener('pointerdown', e => { e.preventDefault(); setDir(dx, dz); });
+let trailCount = 0;
+
+function pushTrailPoint(x, y, z) {
+  // desloca 1 ponto
+  for (let i = CFG.trailLength - 1; i > 0; i--) {
+    trailPts[i * 3] = trailPts[(i - 1) * 3];
+    trailPts[i * 3 + 1] = trailPts[(i - 1) * 3 + 1];
+    trailPts[i * 3 + 2] = trailPts[(i - 1) * 3 + 2];
+  }
+  trailPts[0] = x;
+  trailPts[1] = y;
+  trailPts[2] = z;
+  trailCount = Math.min(trailCount + 1, CFG.trailLength);
+  trailGeo.attributes.position.needsUpdate = true;
+  trailGeo.setDrawRange(0, trailCount);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO DO JOGADOR / CONTROLES
+   ═══════════════════════════════════════════════════════════════ */
+const state = {
+  x: 0,
+  z: 0,
+  y: 0,
+  yaw: 0,
+  targetYaw: 0,
+  turnStartYaw: 0,
+  turning: false,
+  turnProgress: 0,
+  speed: CFG.cruiseSpeed,
+  targetSpeed: CFG.cruiseSpeed,
+  started: false,
 };
-bindBtn('btn-up', 0, -1);
-bindBtn('btn-down', 0, 1);
-bindBtn('btn-left', -1, 0);
-bindBtn('btn-right', 1, 0);
 
-$('go').addEventListener('click', start);
+const keys = { forward: false, backward: false, left: false, right: false };
 
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-  composer.setSize(innerWidth, innerHeight);
-});
-
-/* ---------- Loop do Jogo & Câmera ---------- */
-const want = new THREE.Vector3(), look = new THREE.Vector3();
-function updateCamera(dt) {
-  if (player.alive && state === 'play') {
-    const fx = Math.sin(player.yaw), fz = Math.cos(player.yaw), p = player.mesh.position;
-    want.set(p.x - fx * 10, 6.5, p.z - fz * 10);
-    if (snap) { camera.position.copy(want); snap = false; }
-    else camera.position.lerp(want, 1 - Math.exp(-5 * dt));
-    camera.lookAt(look.set(p.x + fx * 8, 1, p.z + fz * 8));
-  } else {
-    const t = performance.now() / 1000 * .12;
-    camera.position.set(Math.cos(t) * 72, 40, Math.sin(t) * 72);
-    camera.lookAt(0, 0, 0);
-  }
+function requestTurn(dir) {
+  if (!state.started) return;
+  if (state.turning) return;
+  state.turning = true;
+  state.turnProgress = 0;
+  state.turnStartYaw = state.yaw;
+  state.targetYaw = state.yaw + (dir * Math.PI) / 2;
 }
 
-function loop(now) {
-  requestAnimationFrame(loop);
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
-  if (state === 'play') {
-    time += dt; acc += dt;
-    let td = tickDur();
-    while (acc >= td && state === 'play') { acc -= td; tick(); td = tickDur(); }
+/* ─── Teclado ─── */
+window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'w' || k === 'arrowup') keys.forward = true;
+  else if (k === 's' || k === 'arrowdown') keys.backward = true;
+  else if (k === 'a' || k === 'arrowleft') requestTurn(1);
+  else if (k === 'd' || k === 'arrowright') requestTurn(-1);
+});
+window.addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'w' || k === 'arrowup') keys.forward = false;
+  else if (k === 's' || k === 'arrowdown') keys.backward = false;
+});
+
+/* ─── Touch ─── */
+function bindTouch(id, onDown, onUp) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const down = (e) => {
+    e.preventDefault();
+    el.classList.add('active');
+    onDown();
+  };
+  const up = (e) => {
+    e.preventDefault();
+    el.classList.remove('active');
+    onUp();
+  };
+  el.addEventListener('pointerdown', down);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('pointerleave', up);
+}
+
+bindTouch('btnLeft', () => requestTurn(1), () => {});
+bindTouch('btnRight', () => requestTurn(-1), () => {});
+bindTouch('btnGas', () => (keys.forward = true), () => (keys.forward = false));
+bindTouch('btnBrake', () => (keys.backward = true), () => (keys.backward = false));
+
+/* ═══════════════════════════════════════════════════════════════
+   UPDATE DO JOGADOR
+   ═══════════════════════════════════════════════════════════════ */
+function updatePlayer(dt) {
+  if (!state.started) return;
+
+  // velocidade alvo
+  if (keys.forward) state.targetSpeed = Math.min(state.targetSpeed + 34 * dt, CFG.maxSpeed);
+  else if (keys.backward) state.targetSpeed = Math.max(state.targetSpeed - 42 * dt, CFG.minSpeed);
+  else {
+    // retorno suave ao cruzeiro
+    const delta = CFG.cruiseSpeed - state.targetSpeed;
+    state.targetSpeed += THREE.MathUtils.clamp(delta, -12 * dt, 12 * dt);
   }
-  const alpha = state === 'play' ? Math.min(1, acc / tickDur()) : 1;
-  bikes.forEach(b => b.update(alpha, dt));
-  stepParticles(dt);
+  state.speed += (state.targetSpeed - state.speed) * Math.min(1, dt * 6);
+
+  // rotação (lerp de 90°)
+  if (state.turning) {
+    state.turnProgress += dt / CFG.turnDuration;
+    if (state.turnProgress >= 1) {
+      state.turnProgress = 1;
+      state.turning = false;
+      state.yaw = state.targetYaw;
+    }
+    const t = 1 - Math.pow(1 - state.turnProgress, 3);
+    state.yaw = state.turnStartYaw + (state.targetYaw - state.turnStartYaw) * t;
+  }
+
+  // deslocamento no plano XZ
+  const sinY = Math.sin(state.yaw);
+  const cosY = Math.cos(state.yaw);
+  state.x += sinY * state.speed * dt;
+  state.z += cosY * state.speed * dt;
+
+  // altura segue o terreno
+  const groundY = terrainHeight(state.x, state.z);
+  state.y += (groundY - state.y) * Math.min(1, dt * 12);
+
+  bike.position.set(state.x, state.y, state.z);
+
+  // orientação inclinada ao relevo
+  const S = 1.6;
+  const fwdX = sinY, fwdZ = cosY;
+  const rgtX = fwdZ, rgtZ = -fwdX;
+
+  const hF = terrainHeight(state.x + fwdX * S, state.z + fwdZ * S);
+  const hB = terrainHeight(state.x - fwdX * S, state.z - fwdZ * S);
+  const hL = terrainHeight(state.x + rgtX * S, state.z + rgtZ * S);
+  const hR = terrainHeight(state.x - rgtX * S, state.z - rgtZ * S);
+
+  const pitch = Math.atan2(hF - hB, 2 * S);
+  const roll = Math.atan2(hL - hR, 2 * S);
+
+  bike.rotation.order = 'YXZ';
+  bike.rotation.y = state.yaw;
+  bike.rotation.x = pitch;
+  bike.rotation.z = -roll;
+
+  // trail
+  pushTrailPoint(state.x, state.y + 0.15, state.z);
+
+  // cor do trail pela zona atual
+  const zc = zoneColorAt(state.x, state.z);
+  trailMat.color.copy(zc);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CÂMERA (TERCEIRA PESSOA COM LERP)
+   ═══════════════════════════════════════════════════════════════ */
+const camTarget = new THREE.Vector3();
+const camDesired = new THREE.Vector3();
+const camLookAt = new THREE.Vector3();
+
+function updateCamera(dt) {
+  const back = new THREE.Vector3(-Math.sin(state.yaw), 0, -Math.cos(state.yaw));
+  const dist = 9 + (state.speed / CFG.maxSpeed) * 3;
+  const height = 4.5;
+
+  camDesired.copy(bike.position).addScaledVector(back, dist);
+  camDesired.y = bike.position.y + height;
+
+  // não atravessar o terreno
+  const camGround = terrainHeight(camDesired.x, camDesired.z);
+  camDesired.y = Math.max(camDesired.y, camGround + 2.2);
+
+  const lerp = 1 - Math.pow(0.0008, dt);
+  camera.position.lerp(camDesired, lerp);
+
+  camLookAt.copy(bike.position);
+  camLookAt.y += 1.4;
+  camera.lookAt(camLookAt);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HUD
+   ═══════════════════════════════════════════════════════════════ */
+const elSpeed = document.getElementById('speed');
+const elCoords = document.getElementById('coords');
+const elZone = document.getElementById('zone');
+const elFill = document.getElementById('speedfill');
+const elFps = document.getElementById('fps');
+
+let hudAcc = 0;
+function updateHUD(dt) {
+  hudAcc += dt;
+  if (hudAcc < 0.1) return;
+  hudAcc = 0;
+
+  elSpeed.textContent = Math.round(state.speed * 3.6 * 1.6); // estilizado
+  elCoords.textContent = `${Math.round(state.x)}, ${Math.round(state.z)}`;
+  elZone.textContent = zoneNameAt(state.x, state.z);
+  elFill.style.width = `${(state.speed / CFG.maxSpeed) * 100}%`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESIZE
+   ═══════════════════════════════════════════════════════════════ */
+function onResize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  composer.setSize(w, h);
+  bloom.setSize(w, h);
+}
+window.addEventListener('resize', onResize);
+
+/* ═══════════════════════════════════════════════════════════════
+   LOOP PRINCIPAL
+   ═══════════════════════════════════════════════════════════════ */
+const clock = new THREE.Clock();
+let fpsAccum = 0, fpsFrames = 0, currentFps = 60;
+
+// inicialização do mundo (chunks iniciais)
+updateChunks(0, 0);
+state.y = terrainHeight(0, 0);
+bike.position.set(0, state.y, 0);
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  updatePlayer(dt);
   updateCamera(dt);
-  $('stat').textContent = state === 'play' ? `${score()} pts · ${bikes.filter(b => !b.isPlayer && b.alive).length} rivais` : `recorde ${best}`;
+  updateChunks(state.x, state.z);
+  updateHUD(dt);
+
+  // tempo no shader
+  terrainMaterial.uniforms.uTime.value += dt;
+
+  // FPS
+  fpsAccum += dt;
+  fpsFrames++;
+  if (fpsAccum >= 0.5) {
+    currentFps = Math.round(fpsFrames / fpsAccum);
+    elFps.textContent = `${currentFps} FPS`;
+    fpsAccum = 0;
+    fpsFrames = 0;
+  }
+
   composer.render();
 }
 
-requestAnimationFrame(loop);
+/* ═══════════════════════════════════════════════════════════════
+   START / ÁUDIO / UI
+   ═══════════════════════════════════════════════════════════════ */
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+const muteBtn = document.getElementById('muteBtn');
+
+let audioCtx = null;
+let muted = false;
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // drone ambiente
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = 55;
+    gain.gain.value = 0.02;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+  } catch (e) { /* silencioso */ }
+}
+
+startBtn.addEventListener('click', () => {
+  state.started = true;
+  overlay.classList.add('hidden');
+  initAudio();
+  clock.start();
+  requestAnimationFrame(animate);
+});
+
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  if (audioCtx) audioCtx.suspend().then(() => {
+    if (!muted) audioCtx.resume();
+  });
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+  muteBtn.classList.toggle('muted', muted);
+});
+
+// garante que canvas não roube gestos
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
