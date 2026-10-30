@@ -2,48 +2,240 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>The Grid</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      }
-    }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tron Light Cycle Arena</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: #0ff;
+            font-size: 18px;
+            text-shadow: 0 0 10px #0ff;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #audio-control {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #0ff;
+            color: #0ff;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            text-shadow: 0 0 5px #0ff;
+            border-radius: 4px;
+        }
+        #audio-control:hover {
+            background: rgba(0, 255, 255, 0.4);
+        }
+    </style>
 </head>
 <body>
-    <div id="hud">
-        <div id="logo">REVOLTS</div>
-        <div id="stat">0 pts · 3 rivais</div>
-    </div>
+    <div id="info">Use as setas ESQUERDA e DIREITA para pilotar</div>
+    <button id="audio-control" onclick="toggleAudio()">Ligar Trilha Sonora (The Grid)</button>
 
-    <div id="screen">
-        <div class="card">
-            <h1 id="ttl">REVOLTS 3D</h1>
-            <p id="msg">
-                Arena Tron 3D em Palmas.<br><br>
-                Controles:<br>
-                Teclas <b>W A S D</b> ou <b>Setas (▲ ▼ ◄ ►)</b><br>
-                No celular, use o D-Pad de botões virtuais.
-            </p>
-            <button id="go">JOGAR</button>
-        </div>
-    </div>
+    <!-- Player oculto do YouTube para a trilha sonora -->
+    <div id="youtube-player" style="display:none;"></div>
 
-    <div id="dpad">
-        <div class="row">
-            <button id="btn-up" class="pad-btn">▲</button>
-        </div>
-        <div class="row">
-            <button id="btn-left" class="pad-btn">◄</button>
-            <button id="btn-down" class="pad-btn">▼</button>
-            <button id="btn-right" class="pad-btn">►</button>
-        </div>
-    </div>
+    <!-- Importando Three.js via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Importando a API do YouTube IFrame -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 
-    <script type="module" src="main.js"></script>
+    <script>
+        // Configuração da Trilha Sonora via YouTube API
+        let player;
+        let audioPlaying = false;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0',
+                width: '0',
+                videoId: 'tFXYuw96d0c', // ID do vídeo fornecido: The Grid - Daft Punk
+                playerVars: {
+                    'autoplay': 0,
+                    'loop': 1,
+                    'playlist': 'tFXYuw96d0c'
+                }
+            });
+        }
+
+        function toggleAudio() {
+            const btn = document.getElementById('audio-control');
+            if (!player) return;
+            
+            if (!audioPlaying) {
+                player.playVideo();
+                btn.innerText = "Pausar Trilha Sonora";
+                audioPlaying = true;
+            } else {
+                player.pauseVideo();
+                btn.innerText = "Ligar Trilha Sonora (The Grid)";
+                audioPlaying = false;
+            }
+        }
+
+        // Configuração da Cena, Câmera e Renderizador 3D
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x050510);
+        document.body.appendChild(renderer.domElement);
+
+        // Iluminação
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0x00ffff, 1, 100);
+        pointLight.position.set(0, 20, 0);
+        scene.add(pointLight);
+
+        // Criação da Arena (Estádio / Grade 3D)
+        const arenaSize = 160;
+        const gridHelper = new THREE.GridHelper(arenaSize, 40, 0x00ffff, 0x003333);
+        gridHelper.position.y = -0.1;
+        scene.add(gridHelper);
+
+        // Paredes da Arena
+        const wallMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3, wireframe: true });
+        const wallGeom = new THREE.BoxGeometry(arenaSize, 10, 2);
+        
+        const wall1 = new THREE.Mesh(wallGeom, wallMaterial);
+        wall1.position.set(0, 5, -arenaSize/2);
+        scene.add(wall1);
+
+        const wall2 = new THREE.Mesh(wallGeom, wallMaterial);
+        wall2.position.set(0, 5, arenaSize/2);
+        scene.add(wall2);
+
+        const wallGeomSide = new THREE.BoxGeometry(2, 10, arenaSize);
+        const wall3 = new THREE.Mesh(wallGeomSide, wallMaterial);
+        wall3.position.set(-arenaSize/2, 5, 0);
+        scene.add(wall3);
+
+        const wall4 = new THREE.Mesh(wallGeomSide, wallMaterial);
+        wall4.position.set(arenaSize/2, 5, 0);
+        scene.add(wall4);
+
+        // Sistema das Motos de Luz
+        const bikes = [];
+        const speed = 0.8; // Velocidade constante igual para todas as motos
+
+        class LightCycle {
+            constructor(color, x, z, angle) {
+                this.color = color;
+                this.mesh = new THREE.Group();
+
+                // Corpo da Moto
+                const bodyGeom = new THREE.BoxGeometry(1, 1.2, 3);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.8 });
+                this.body = new THREE.Mesh(bodyGeom, bodyMat);
+                this.body.position.y = 0.6;
+                this.mesh.add(this.body);
+
+                this.mesh.position.set(x, 0, z);
+                this.mesh.rotation.y = angle;
+                scene.add(this.mesh);
+
+                this.direction = angle; // Ângulo de rotação atual
+                this.alive = true;
+            }
+
+            update() {
+                if (!this.alive) return;
+
+                // Movimento constante para frente baseado na direção
+                this.mesh.position.x += Math.sin(this.direction) * speed;
+                this.mesh.position.z += Math.cos(this.direction) * speed;
+
+                // Colisão com as bordas da arena
+                const limit = arenaSize / 2 - 2;
+                if (Math.abs(this.mesh.position.x) > limit || Math.abs(this.mesh.position.z) > limit) {
+                    this.alive = false;
+                    this.body.material.color.setHex(0xff0000);
+                    this.body.material.emissive.setHex(0xff0000);
+                }
+            }
+
+            turnLeft() {
+                if (!this.alive) return;
+                this.direction += Math.PI / 2; // Gira 90 graus para a esquerda
+                this.mesh.rotation.y = this.direction;
+            }
+
+            turnRight() {
+                if (!this.alive) return;
+                this.direction -= Math.PI / 2; // Gira 90 graus para a direita
+                this.mesh.rotation.y = this.direction;
+            }
+        }
+
+        // Criando as 4 motos na arena com posições iniciais simétricas
+        bikes.push(new LightCycle(0x00ffff, 0, 50, 0));           // Jogador 1 (Azul)
+        bikes.push(new LightCycle(0xff00ff, 0, -50, Math.PI));      // Moto 2 (Magenta)
+        bikes.push(new LightCycle(0xffff00, 50, 0, Math.PI/2));     // Moto 3 (Amarela)
+        bikes.push(new LightCycle(0x00ff00, -50, 0, -Math.PI/2));   // Moto 4 (Verde)
+
+        // Controles de Duas Teclas (Setas Esquerda / Direita ou A / D)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                bikes[0].turnLeft();
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                bikes[0].turnRight();
+            }
+        });
+
+        // Loop de Animação e Jogo
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Atualiza o movimento de todas as motos
+            bikes.forEach((bike, index) => {
+                bike.update();
+
+                // Lógica simples de IA para as outras 3 motos mudarem de direção periodicamente
+                if (index > 0 && bike.alive && Math.random() < 0.02) {
+                    if (Math.random() > 0.5) bike.turnLeft();
+                    else bike.turnRight();
+                }
+            });
+
+            // Câmera em terceira pessoa seguindo suavemente a moto do jogador principal
+            const player = bikes[0];
+            const targetCamPos = new THREE.Vector3(
+                player.mesh.position.x - Math.sin(player.direction) * 15,
+                player.mesh.position.y + 8,
+                player.mesh.position.z - Math.cos(player.direction) * 15
+            );
+            camera.position.lerp(targetCamPos, 0.1);
+            camera.lookAt(player.mesh.position);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Responsividade da Tela
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 </html>
