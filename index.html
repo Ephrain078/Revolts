@@ -1,124 +1,33 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#030711">
-  <title>The Grid</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#02040a">
+    <title>The Grid</title>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    <link rel="stylesheet" href="./style.css">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
     }
-  }
-  </script>
+    </script>
 </head>
+
 <body>
+    <div id="game-container"></div>
 
-  <canvas id="scene"></canvas>
-  <div id="vignette"></div>
+    <div id="game-title">TRON GRID RUNNER</div>
 
-  <header id="hud">
-    <div class="hud-top">
-      <div class="brand">
-        TRON
-        <span>GRID RUNNER <b>2.0</b></span>
-      </div>
-
-      <div class="stats">
-        <div class="stat">
-          <span class="label">VELOCIDADE</span>
-          <span class="value">
-            <span id="speed">0</span><small> km/h</small>
-          </span>
-        </div>
-
-        <div class="stat">
-          <span class="label">DISTÂNCIA</span>
-          <span class="value accent" id="dist">0 m</span>
-        </div>
-
-        <div class="stat">
-          <span class="label">SETOR</span>
-          <span class="value" id="sector">0 : 0</span>
-        </div>
-      </div>
+    <div id="instructions">
+        WASD ou SETAS para movimentar<br>
+        Joystick para controlar no celular
     </div>
 
-    <div class="hud-bottom">
-      <div class="speed-wrap">
-        <div class="speed-head">
-          <span>ENERGIA</span>
-          <span id="fps">-- FPS</span>
-        </div>
-        <div class="speed-track">
-          <div id="speedfill"></div>
-        </div>
-      </div>
-
-      <div class="status" id="status">
-        CITY GRID // ONLINE
-      </div>
-    </div>
-  </header>
-
-  <div id="joystick" aria-label="Controle virtual">
-    <div class="joy-ring"></div>
-    <div id="joystickKnob"></div>
-    <span class="joy-label">MOVE</span>
-  </div>
-
-  <div class="mobile-help">
-    Arraste: esquerda/direita para virar · cima/baixo para acelerar/frear
-  </div>
-
-  <button id="muteBtn" aria-label="Alternar áudio">
-    SOM ON
-  </button>
-
-  <section id="overlay">
-    <div class="panel">
-      <div class="eyebrow">
-        SIMULAÇÃO DE MOBILIDADE // 02.0
-      </div>
-
-      <h1>TRON<em>//</em>GRID</h1>
-
-      <div class="sub">NEON CITY SANDBOX</div>
-
-      <p class="desc">
-        Atravesse uma cidade digital procedural.
-        Ruas luminosas, torres infinitas e uma trilha
-        de energia que registra seu percurso.
-      </p>
-
-      <div class="feature-row">
-        <span>WORLD STREAMING</span>
-        <span>ADAPTIVE RENDER</span>
-        <span>DESKTOP + MOBILE</span>
-      </div>
-
-      <div class="keys">
-        <div><kbd>W</kbd><kbd>↑</kbd><span>Acelerar</span></div>
-        <div><kbd>S</kbd><kbd>↓</kbd><span>Frear</span></div>
-        <div><kbd>A</kbd><kbd>←</kbd><span>Virar à esquerda</span></div>
-        <div><kbd>D</kbd><kbd>→</kbd><span>Virar à direita</span></div>
-      </div>
-
-      <button id="startBtn">
-        INICIAR EXECUÇÃO <span>↗</span>
-      </button>
-
-      <p class="hint">
-        No celular, use o controle virtual no canto inferior esquerdo.
-      </p>
-    </div>
-  </section>
-
-  <script type="module" src="main.js"></script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>
