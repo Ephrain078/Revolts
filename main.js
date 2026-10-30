@@ -4,70 +4,24 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 /* ═══════════════════════════════════════════════════════════════
-   CONFIGURAÇÃO GLOBAL
+   CONFIGURAÇÃO
    ═══════════════════════════════════════════════════════════════ */
 const CFG = {
   chunkSize: 100,
-  chunkRes: 20,
   viewDist: 4,
   gridSize: 5,
   fogColor: 0x000208,
-  fogDensity: 0.007,
+  fogDensity: 0.0085,
   minSpeed: 6,
-  cruiseSpeed: 16,
-  maxSpeed: 46,
-  turnDuration: 0.16,
-  trailLength: 220,
+  cruiseSpeed: 18,
+  maxSpeed: 48,
+  turnDuration: 0.18,
+  trailLength: 260,
+  neon: 0x00f0ff,
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   NOISE (VALUE NOISE 2D, MULTI-OITAVA)
-   ═══════════════════════════════════════════════════════════════ */
-function hash2(x, y) {
-  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
-  return s - Math.floor(s);
-}
-function valueNoise(x, y) {
-  const ix = Math.floor(x), iy = Math.floor(y);
-  const fx = x - ix, fy = y - iy;
-  const ux = fx * fx * (3 - 2 * fx);
-  const uy = fy * fy * (3 - 2 * fy);
-  const a = hash2(ix, iy);
-  const b = hash2(ix + 1, iy);
-  const c = hash2(ix, iy + 1);
-  const d = hash2(ix + 1, iy + 1);
-  return a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + d * ux * uy;
-}
-
-function terrainHeight(x, z) {
-  let h = 0;
-  h += valueNoise(x * 0.0075, z * 0.0075) * 34;
-  h += valueNoise(x * 0.021, z * 0.021) * 11;
-  h += valueNoise(x * 0.058, z * 0.058) * 3.2;
-  h += valueNoise(x * 0.17, z * 0.17) * 0.7;
-  return h - 24;
-}
-
-function zoneColorAt(x, z) {
-  const t = valueNoise(x * 0.0012 + 32.1, z * 0.0012 + 11.7);
-  const t2 = valueNoise(x * 0.0005 + 100, z * 0.0005 + 200);
-  const cyan = new THREE.Color(0x00f0ff);
-  const magenta = new THREE.Color(0xff00d0);
-  const amber = new THREE.Color(0xffa020);
-  const base = cyan.clone().lerp(magenta, t);
-  return base.lerp(amber, Math.max(0, (t2 - 0.65)) * 2);
-}
-
-function zoneNameAt(x, z) {
-  const t = valueNoise(x * 0.0012 + 32.1, z * 0.0012 + 11.7);
-  if (t < 0.3) return 'Ciano';
-  if (t < 0.55) return 'Ciano-Magenta';
-  if (t < 0.75) return 'Magenta';
-  return 'Âmbar';
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   RENDERER / SCENE / CAMERA
+   RENDERER / CENA / CÂMERA
    ═══════════════════════════════════════════════════════════════ */
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({
@@ -85,42 +39,37 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(CFG.fogColor, CFG.fogDensity);
 scene.background = new THREE.Color(CFG.fogColor);
 
-const camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.5, 900);
-camera.position.set(0, 12, 14);
-camera.lookAt(0, 0, 0);
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.5, 900);
+camera.position.set(0, 3.6, -9);
+camera.lookAt(0, 1.4, 0);
 
-/* ─── Iluminação ─── */
-scene.add(new THREE.AmbientLight(0x335577, 0.55));
-scene.add(new THREE.HemisphereLight(0x00ccee, 0xff00aa, 0.35));
-const dirLight = new THREE.DirectionalLight(0x88ffff, 0.6);
-dirLight.position.set(80, 140, 60);
+scene.add(new THREE.AmbientLight(0x224466, 0.55));
+const hemi = new THREE.HemisphereLight(0x00ccee, 0x001122, 0.5);
+scene.add(hemi);
+const dirLight = new THREE.DirectionalLight(0x88ffff, 0.7);
+dirLight.position.set(60, 100, 40);
 scene.add(dirLight);
 
-/* ─── Pós-processamento (Bloom) ─── */
+/* Pós-processamento (bloom) */
 const composer = new EffectComposer(renderer);
 composer.setSize(window.innerWidth, window.innerHeight);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  1.15,
-  0.55,
-  0.35
+  1.25,
+  0.6,
+  0.3
 );
 composer.addPass(bloom);
 
 /* ═══════════════════════════════════════════════════════════════
-   SHADER DO TERRENO (GRID NEON + FOG)
+   SHADER DO TERRENO PLANO (grid neon ciano)
    ═══════════════════════════════════════════════════════════════ */
 const terrainVert = /* glsl */ `
-  attribute vec3 zoneColor;
   varying vec3 vWorldPos;
-  varying vec3 vNormalW;
-  varying vec3 vZoneColor;
   void main() {
     vec4 wp = modelMatrix * vec4(position, 1.0);
     vWorldPos = wp.xyz;
-    vNormalW = normalize(mat3(modelMatrix) * normal);
-    vZoneColor = zoneColor;
     gl_Position = projectionMatrix * viewMatrix * wp;
   }
 `;
@@ -131,36 +80,35 @@ const terrainFrag = /* glsl */ `
   uniform float uTime;
   uniform vec3 uFogColor;
   uniform float uFogDensity;
+  uniform vec3 uNeonColor;
   varying vec3 vWorldPos;
-  varying vec3 vNormalW;
-  varying vec3 vZoneColor;
 
   float gridLine(float coord, float spacing) {
     float f = abs(fract(coord / spacing) - 0.5);
-    return smoothstep(0.47, 0.5, f);
+    return smoothstep(0.46, 0.5, f);
   }
 
   void main() {
     vec2 xz = vWorldPos.xz;
-    float g1 = max(gridLine(xz.x, uGridSize), gridLine(xz.y, uGridSize));
-    float g5 = max(gridLine(xz.x, uGridSize * 5.0), gridLine(xz.y, uGridSize * 5.0));
 
-    // base muito escura (asfalto digital)
+    float g1 = max(gridLine(xz.x, uGridSize),        gridLine(xz.y, uGridSize));
+    float g5 = max(gridLine(xz.x, uGridSize * 5.0),  gridLine(xz.y, uGridSize * 5.0));
+
     vec3 color = vec3(0.004, 0.008, 0.018);
 
-    // pulso nas linhas (leve)
-    float pulse = 0.85 + 0.15 * sin(uTime * 2.0 + xz.x * 0.05 + xz.y * 0.05);
+    // pulso global
+    float pulse = 0.85 + 0.15 * sin(uTime * 2.0);
 
-    // emissão do grid
-    vec3 emissive = vZoneColor * (g1 * 1.6 * pulse + g5 * 3.2 * pulse);
+    // onda radial emanando do jogador
+    float d = length(xz - cameraPosition.xz);
+    float wave = 0.85 + 0.25 * sin(d * 0.06 - uTime * 2.2);
 
-    // brilho nas encostas
-    float slope = 1.0 - abs(vNormalW.y);
-    emissive += vZoneColor * slope * 0.35;
+    vec3 emissive =
+      uNeonColor * (g1 * 1.7 * pulse * wave + g5 * 3.4 * pulse * wave);
 
     color += emissive;
 
-    // fog exponencial
+    // fog
     float dist = length(vWorldPos - cameraPosition);
     float fog = 1.0 - exp(-uFogDensity * uFogDensity * dist * dist);
     color = mix(color, uFogColor, clamp(fog, 0.0, 1.0));
@@ -171,54 +119,27 @@ const terrainFrag = /* glsl */ `
 
 const terrainMaterial = new THREE.ShaderMaterial({
   uniforms: {
-    uGridSize: { value: CFG.gridSize },
-    uTime: { value: 0 },
-    uFogColor: { value: new THREE.Color(CFG.fogColor) },
+    uGridSize:   { value: CFG.gridSize },
+    uTime:       { value: 0 },
+    uFogColor:   { value: new THREE.Color(CFG.fogColor) },
     uFogDensity: { value: CFG.fogDensity },
+    uNeonColor:  { value: new THREE.Color(CFG.neon) },
   },
   vertexShader: terrainVert,
   fragmentShader: terrainFrag,
 });
 
 /* ═══════════════════════════════════════════════════════════════
-   SISTEMA DE CHUNKS INFINITOS
+   CHUNKS INFINITOS (geometria compartilhada)
    ═══════════════════════════════════════════════════════════════ */
-const chunks = new Map(); // key = "cx,cz" -> { mesh }
+const sharedChunkGeo = new THREE.PlaneGeometry(CFG.chunkSize, CFG.chunkSize, 2, 2);
+sharedChunkGeo.rotateX(-Math.PI / 2);
 
-function buildChunkGeometry(cx, cz) {
-  const size = CFG.chunkSize;
-  const res = CFG.chunkRes;
-  const geo = new THREE.PlaneGeometry(size, size, res, res);
-  geo.rotateX(-Math.PI / 2);
-
-  const pos = geo.attributes.position;
-  const colors = new Float32Array(pos.count * 3);
-  const baseX = cx * size + size / 2;
-  const baseZ = cz * size + size / 2;
-
-  for (let i = 0; i < pos.count; i++) {
-    const wx = pos.getX(i) + baseX;
-    const wz = pos.getZ(i) + baseZ;
-    pos.setX(i, wx);
-    pos.setZ(i, wz);
-    pos.setY(i, terrainHeight(wx, wz));
-
-    const c = zoneColorAt(wx, wz);
-    colors[i * 3] = c.r;
-    colors[i * 3 + 1] = c.g;
-    colors[i * 3 + 2] = c.b;
-  }
-
-  geo.setAttribute('zoneColor', new THREE.BufferAttribute(colors, 3));
-  geo.computeVertexNormals();
-  geo.computeBoundingSphere();
-  return geo;
-}
+const chunks = new Map();
 
 function createChunk(cx, cz) {
-  const geo = buildChunkGeometry(cx, cz);
-  const mesh = new THREE.Mesh(geo, terrainMaterial);
-  mesh.frustumCulled = true;
+  const mesh = new THREE.Mesh(sharedChunkGeo, terrainMaterial);
+  mesh.position.set(cx * CFG.chunkSize, 0, cz * CFG.chunkSize);
   mesh.matrixAutoUpdate = false;
   mesh.updateMatrix();
   scene.add(mesh);
@@ -226,29 +147,25 @@ function createChunk(cx, cz) {
 }
 
 function updateChunks(px, pz) {
-  const pcx = Math.floor(px / CFG.chunkSize);
-  const pcz = Math.floor(pz / CFG.chunkSize);
+  const pcx = Math.floor(px / CFG.chunkSize + 0.5);
+  const pcz = Math.floor(pz / CFG.chunkSize + 0.5);
   const needed = new Set();
   const d = CFG.viewDist;
 
   for (let dx = -d; dx <= d; dx++) {
     for (let dz = -d; dz <= d; dz++) {
-      // Círculo aproximado para economizar chunks
       if (dx * dx + dz * dz > d * d + d) continue;
       needed.add(`${pcx + dx},${pcz + dz}`);
     }
   }
 
-  // remover chunks fora de alcance
   for (const [key, chunk] of chunks) {
     if (!needed.has(key)) {
       scene.remove(chunk.mesh);
-      chunk.mesh.geometry.dispose();
       chunks.delete(key);
     }
   }
 
-  // criar faltantes
   for (const key of needed) {
     if (!chunks.has(key)) {
       const [cx, cz] = key.split(',').map(Number);
@@ -258,32 +175,28 @@ function updateChunks(px, pz) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LIGHT CYCLE (MOTO DE LUZ)
+   LIGHT CYCLE (apenas neon ciano)
    ═══════════════════════════════════════════════════════════════ */
 function buildLightCycle() {
   const g = new THREE.Group();
 
   const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0x080812,
+    color: 0x05070d,
     metalness: 0.95,
-    roughness: 0.25,
-    emissive: 0x001a22,
-    emissiveIntensity: 0.4,
+    roughness: 0.28,
+    emissive: 0x001118,
+    emissiveIntensity: 0.5,
   });
-  const glowMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-  const glowMagenta = new THREE.MeshBasicMaterial({ color: 0xff00d0 });
+  const glow = new THREE.MeshBasicMaterial({ color: CFG.neon });
 
-  // corpo
   const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 2.6), bodyMat);
   body.position.y = 0.65;
   g.add(body);
 
-  // carenagem dianteira
   const nose = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.35, 0.8), bodyMat);
   nose.position.set(0, 0.55, 1.55);
   g.add(nose);
 
-  // rodas (cilindros no eixo X)
   const wheelGeo = new THREE.CylinderGeometry(0.55, 0.55, 0.28, 20);
   wheelGeo.rotateZ(Math.PI / 2);
 
@@ -295,40 +208,43 @@ function buildLightCycle() {
   w2.position.set(0, 0.55, -1.0);
   g.add(w2);
 
-  // aros de neon
-  const ringGeo = new THREE.TorusGeometry(0.55, 0.035, 8, 28);
+  const ringGeo = new THREE.TorusGeometry(0.55, 0.04, 8, 28);
   ringGeo.rotateY(Math.PI / 2);
 
-  const r1 = new THREE.Mesh(ringGeo, glowMat);
+  const r1 = new THREE.Mesh(ringGeo, glow);
   r1.position.copy(w1.position);
   g.add(r1);
 
-  const r2 = new THREE.Mesh(ringGeo, glowMagenta);
+  const r2 = new THREE.Mesh(ringGeo, glow);
   r2.position.copy(w2.position);
   g.add(r2);
 
-  // piloto
   const rider = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.75, 0.55), bodyMat);
   rider.position.set(0, 1.35, -0.15);
   g.add(rider);
 
-  // listras laterais
-  const strip = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 2.6), glowMat);
-  strip.position.set(0.47, 0.65, 0);
-  g.add(strip);
+  const stripL = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 2.6), glow);
+  stripL.position.set(0.47, 0.65, 0);
+  g.add(stripL);
 
-  const strip2 = strip.clone();
-  strip2.material = glowMagenta;
-  strip2.position.x = -0.47;
-  g.add(strip2);
+  const stripR = stripL.clone();
+  stripR.position.x = -0.47;
+  g.add(stripR);
 
-  // farol
   const headlight = new THREE.Mesh(
-    new THREE.SphereGeometry(0.12, 8, 8),
+    new THREE.SphereGeometry(0.13, 8, 8),
     new THREE.MeshBasicMaterial({ color: 0xffffff })
   );
   headlight.position.set(0, 0.7, 1.95);
   g.add(headlight);
+
+  // halo traseiro (efeito glow adicional)
+  const tail = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 6, 6),
+    new THREE.MeshBasicMaterial({ color: CFG.neon })
+  );
+  tail.position.set(0, 0.7, -1.35);
+  g.add(tail);
 
   return g;
 }
@@ -337,16 +253,16 @@ const bike = buildLightCycle();
 scene.add(bike);
 
 /* ═══════════════════════════════════════════════════════════════
-   RASTRO (TRAIL) DE NEON
+   TRAIL DE NEON
    ═══════════════════════════════════════════════════════════════ */
 const trailPts = new Float32Array(CFG.trailLength * 3);
 const trailGeo = new THREE.BufferGeometry();
 trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPts, 3));
 trailGeo.setDrawRange(0, 0);
 const trailMat = new THREE.LineBasicMaterial({
-  color: 0x00f0ff,
+  color: CFG.neon,
   transparent: true,
-  opacity: 0.85,
+  opacity: 0.95,
 });
 const trailLine = new THREE.Line(trailGeo, trailMat);
 trailLine.frustumCulled = false;
@@ -354,15 +270,14 @@ scene.add(trailLine);
 
 let trailCount = 0;
 
-function pushTrailPoint(x, y, z) {
-  // desloca 1 ponto
+function pushTrailPoint(x, z) {
   for (let i = CFG.trailLength - 1; i > 0; i--) {
-    trailPts[i * 3] = trailPts[(i - 1) * 3];
+    trailPts[i * 3]     = trailPts[(i - 1) * 3];
     trailPts[i * 3 + 1] = trailPts[(i - 1) * 3 + 1];
     trailPts[i * 3 + 2] = trailPts[(i - 1) * 3 + 2];
   }
   trailPts[0] = x;
-  trailPts[1] = y;
+  trailPts[1] = 0.12;
   trailPts[2] = z;
   trailCount = Math.min(trailCount + 1, CFG.trailLength);
   trailGeo.attributes.position.needsUpdate = true;
@@ -370,34 +285,29 @@ function pushTrailPoint(x, y, z) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ESTADO DO JOGADOR / CONTROLES
+   ESTADO / CONTROLES
    ═══════════════════════════════════════════════════════════════ */
 const state = {
-  x: 0,
-  z: 0,
-  y: 0,
-  yaw: 0,
-  targetYaw: 0,
-  turnStartYaw: 0,
-  turning: false,
-  turnProgress: 0,
+  x: 0, z: 0, yaw: 0,
+  targetYaw: 0, turnStartYaw: 0,
+  turning: false, turnProgress: 0,
+  lean: 0,
   speed: CFG.cruiseSpeed,
   targetSpeed: CFG.cruiseSpeed,
   started: false,
 };
 
-const keys = { forward: false, backward: false, left: false, right: false };
+const keys = { forward: false, backward: false };
 
 function requestTurn(dir) {
-  if (!state.started) return;
-  if (state.turning) return;
+  if (!state.started || state.turning) return;
   state.turning = true;
   state.turnProgress = 0;
   state.turnStartYaw = state.yaw;
   state.targetYaw = state.yaw + (dir * Math.PI) / 2;
 }
 
-/* ─── Teclado ─── */
+/* Teclado */
 window.addEventListener('keydown', (e) => {
   const k = e.key.toLowerCase();
   if (k === 'w' || k === 'arrowup') keys.forward = true;
@@ -411,30 +321,68 @@ window.addEventListener('keyup', (e) => {
   else if (k === 's' || k === 'arrowdown') keys.backward = false;
 });
 
-/* ─── Touch ─── */
-function bindTouch(id, onDown, onUp) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const down = (e) => {
-    e.preventDefault();
-    el.classList.add('active');
-    onDown();
-  };
-  const up = (e) => {
-    e.preventDefault();
-    el.classList.remove('active');
-    onUp();
-  };
-  el.addEventListener('pointerdown', down);
-  el.addEventListener('pointerup', up);
-  el.addEventListener('pointercancel', up);
-  el.addEventListener('pointerleave', up);
+/* ═══════════════════════════════════════════════════════════════
+   JOYSTICK ANALÓGICO (MIR4-style)
+   ═══════════════════════════════════════════════════════════════ */
+const joystick = document.getElementById('joystick');
+const knob = document.getElementById('joystickKnob');
+
+const joy = {
+  active: false,
+  cx: 0, cy: 0,
+  radius: 50,
+  dx: 0, dy: 0, // normalizados -1..1
+};
+
+const TURN_THRESHOLD = 0.55;
+const TURN_RESET = 0.35;
+let turnAxis = null; // 'left' | 'right' | null
+
+function joyStart(e) {
+  const r = joystick.getBoundingClientRect();
+  joy.cx = r.left + r.width / 2;
+  joy.cy = r.top + r.height / 2;
+  joy.radius = (r.width - 60) / 2;
+  joy.active = true;
+  joystick.classList.add('active');
+  joyMove(e.clientX, e.clientY);
 }
 
-bindTouch('btnLeft', () => requestTurn(1), () => {});
-bindTouch('btnRight', () => requestTurn(-1), () => {});
-bindTouch('btnGas', () => (keys.forward = true), () => (keys.forward = false));
-bindTouch('btnBrake', () => (keys.backward = true), () => (keys.backward = false));
+function joyMove(px, py) {
+  if (!joy.active) return;
+  let dx = px - joy.cx;
+  let dy = py - joy.cy;
+  const dist = Math.hypot(dx, dy);
+  if (dist > joy.radius) {
+    dx = (dx / dist) * joy.radius;
+    dy = (dy / dist) * joy.radius;
+  }
+  joy.dx = dx / joy.radius;
+  joy.dy = -dy / joy.radius; // cima = positivo
+  knob.style.transform = `translate(${dx}px, ${dy}px)`;
+}
+
+function joyEnd() {
+  if (!joy.active) return;
+  joy.active = false;
+  joy.dx = 0;
+  joy.dy = 0;
+  joystick.classList.remove('active');
+  knob.style.transform = '';
+  turnAxis = null;
+}
+
+joystick.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  try { joystick.setPointerCapture(e.pointerId); } catch (_) {}
+  joyStart(e);
+});
+joystick.addEventListener('pointermove', (e) => {
+  if (joy.active) joyMove(e.clientX, e.clientY);
+});
+joystick.addEventListener('pointerup', joyEnd);
+joystick.addEventListener('pointercancel', joyEnd);
+joystick.addEventListener('lostpointercapture', joyEnd);
 
 /* ═══════════════════════════════════════════════════════════════
    UPDATE DO JOGADOR
@@ -442,17 +390,21 @@ bindTouch('btnBrake', () => (keys.backward = true), () => (keys.backward = false
 function updatePlayer(dt) {
   if (!state.started) return;
 
-  // velocidade alvo
-  if (keys.forward) state.targetSpeed = Math.min(state.targetSpeed + 34 * dt, CFG.maxSpeed);
-  else if (keys.backward) state.targetSpeed = Math.max(state.targetSpeed - 42 * dt, CFG.minSpeed);
-  else {
-    // retorno suave ao cruzeiro
+  // ── Velocidade ──
+  const accelInput = keys.forward || joy.dy > 0.3;
+  const brakeInput = keys.backward || joy.dy < -0.3;
+
+  if (accelInput) {
+    state.targetSpeed = Math.min(state.targetSpeed + 34 * dt, CFG.maxSpeed);
+  } else if (brakeInput) {
+    state.targetSpeed = Math.max(state.targetSpeed - 42 * dt, CFG.minSpeed);
+  } else {
     const delta = CFG.cruiseSpeed - state.targetSpeed;
     state.targetSpeed += THREE.MathUtils.clamp(delta, -12 * dt, 12 * dt);
   }
   state.speed += (state.targetSpeed - state.speed) * Math.min(1, dt * 6);
 
-  // rotação (lerp de 90°)
+  // ── Rotação (90° suave) ──
   if (state.turning) {
     state.turnProgress += dt / CFG.turnDuration;
     if (state.turnProgress >= 1) {
@@ -462,79 +414,72 @@ function updatePlayer(dt) {
     }
     const t = 1 - Math.pow(1 - state.turnProgress, 3);
     state.yaw = state.turnStartYaw + (state.targetYaw - state.turnStartYaw) * t;
+
+    // lean (inclinação lateral visual)
+    const dir = Math.sign(state.targetYaw - state.turnStartYaw);
+    state.lean = -dir * Math.sin(state.turnProgress * Math.PI) * 0.35;
+  } else {
+    state.lean *= Math.pow(0.001, dt);
   }
 
-  // deslocamento no plano XZ
+  // ── Joystick X → gatilho de curva (edge detect) ──
+  if (joy.active) {
+    if (joy.dx < -TURN_THRESHOLD && turnAxis === null) {
+      requestTurn(1);
+      turnAxis = 'left';
+    } else if (joy.dx > TURN_THRESHOLD && turnAxis === null) {
+      requestTurn(-1);
+      turnAxis = 'right';
+    } else if (Math.abs(joy.dx) < TURN_RESET) {
+      turnAxis = null;
+    }
+  }
+
+  // ── Movimento no plano XZ ──
   const sinY = Math.sin(state.yaw);
   const cosY = Math.cos(state.yaw);
   state.x += sinY * state.speed * dt;
   state.z += cosY * state.speed * dt;
 
-  // altura segue o terreno
-  const groundY = terrainHeight(state.x, state.z);
-  state.y += (groundY - state.y) * Math.min(1, dt * 12);
-
-  bike.position.set(state.x, state.y, state.z);
-
-  // orientação inclinada ao relevo
-  const S = 1.6;
-  const fwdX = sinY, fwdZ = cosY;
-  const rgtX = fwdZ, rgtZ = -fwdX;
-
-  const hF = terrainHeight(state.x + fwdX * S, state.z + fwdZ * S);
-  const hB = terrainHeight(state.x - fwdX * S, state.z - fwdZ * S);
-  const hL = terrainHeight(state.x + rgtX * S, state.z + rgtZ * S);
-  const hR = terrainHeight(state.x - rgtX * S, state.z - rgtZ * S);
-
-  const pitch = Math.atan2(hF - hB, 2 * S);
-  const roll = Math.atan2(hL - hR, 2 * S);
-
+  // ── Bike transform ──
+  bike.position.set(state.x, 0, state.z);
   bike.rotation.order = 'YXZ';
   bike.rotation.y = state.yaw;
-  bike.rotation.x = pitch;
-  bike.rotation.z = -roll;
+  bike.rotation.x = 0;
+  bike.rotation.z = state.lean;
 
-  // trail
-  pushTrailPoint(state.x, state.y + 0.15, state.z);
-
-  // cor do trail pela zona atual
-  const zc = zoneColorAt(state.x, state.z);
-  trailMat.color.copy(zc);
+  // ── Trail ──
+  pushTrailPoint(state.x, state.z);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CÂMERA (TERCEIRA PESSOA COM LERP)
+   CÂMERA (3ª pessoa com lerp)
    ═══════════════════════════════════════════════════════════════ */
-const camTarget = new THREE.Vector3();
 const camDesired = new THREE.Vector3();
-const camLookAt = new THREE.Vector3();
+const camLook = new THREE.Vector3();
 
 function updateCamera(dt) {
   const back = new THREE.Vector3(-Math.sin(state.yaw), 0, -Math.cos(state.yaw));
-  const dist = 9 + (state.speed / CFG.maxSpeed) * 3;
-  const height = 4.5;
+  const dist = 8.5 + (state.speed / CFG.maxSpeed) * 3;
+  const height = 3.6;
 
   camDesired.copy(bike.position).addScaledVector(back, dist);
-  camDesired.y = bike.position.y + height;
-
-  // não atravessar o terreno
-  const camGround = terrainHeight(camDesired.x, camDesired.z);
-  camDesired.y = Math.max(camDesired.y, camGround + 2.2);
+  camDesired.y = height;
 
   const lerp = 1 - Math.pow(0.0008, dt);
   camera.position.lerp(camDesired, lerp);
 
-  camLookAt.copy(bike.position);
-  camLookAt.y += 1.4;
-  camera.lookAt(camLookAt);
+  camLook.copy(bike.position);
+  camLook.y += 1.35;
+  camera.lookAt(camLook);
 }
 
 /* ═══════════════════════════════════════════════════════════════
    HUD
    ═══════════════════════════════════════════════════════════════ */
 const elSpeed = document.getElementById('speed');
+const elDist = document.getElementById('dist');
 const elCoords = document.getElementById('coords');
-const elZone = document.getElementById('zone');
 const elFill = document.getElementById('speedfill');
 const elFps = document.getElementById('fps');
 
@@ -544,9 +489,9 @@ function updateHUD(dt) {
   if (hudAcc < 0.1) return;
   hudAcc = 0;
 
-  elSpeed.textContent = Math.round(state.speed * 3.6 * 1.6); // estilizado
+  elSpeed.textContent = Math.round(state.speed * 3.6 * 1.6);
   elCoords.textContent = `${Math.round(state.x)}, ${Math.round(state.z)}`;
-  elZone.textContent = zoneNameAt(state.x, state.z);
+  elDist.textContent = `${Math.round(Math.hypot(state.x, state.z))} m`;
   elFill.style.width = `${(state.speed / CFG.maxSpeed) * 100}%`;
 }
 
@@ -564,15 +509,14 @@ function onResize() {
 window.addEventListener('resize', onResize);
 
 /* ═══════════════════════════════════════════════════════════════
-   LOOP PRINCIPAL
+   LOOP
    ═══════════════════════════════════════════════════════════════ */
 const clock = new THREE.Clock();
-let fpsAccum = 0, fpsFrames = 0, currentFps = 60;
+let fpsAccum = 0, fpsFrames = 0;
 
-// inicialização do mundo (chunks iniciais)
+// init
 updateChunks(0, 0);
-state.y = terrainHeight(0, 0);
-bike.position.set(0, state.y, 0);
+bike.position.set(0, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
@@ -583,15 +527,12 @@ function animate() {
   updateChunks(state.x, state.z);
   updateHUD(dt);
 
-  // tempo no shader
   terrainMaterial.uniforms.uTime.value += dt;
 
-  // FPS
   fpsAccum += dt;
   fpsFrames++;
   if (fpsAccum >= 0.5) {
-    currentFps = Math.round(fpsFrames / fpsAccum);
-    elFps.textContent = `${currentFps} FPS`;
+    elFps.textContent = `${Math.round(fpsFrames / fpsAccum)} FPS`;
     fpsAccum = 0;
     fpsFrames = 0;
   }
@@ -600,7 +541,7 @@ function animate() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   START / ÁUDIO / UI
+   START / ÁUDIO
    ═══════════════════════════════════════════════════════════════ */
 const overlay = document.getElementById('overlay');
 const startBtn = document.getElementById('startBtn');
@@ -613,15 +554,14 @@ function initAudio() {
   if (audioCtx) return;
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // drone ambiente
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sawtooth';
     osc.frequency.value = 55;
-    gain.gain.value = 0.02;
+    gain.gain.value = 0.018;
     osc.connect(gain).connect(audioCtx.destination);
     osc.start();
-  } catch (e) { /* silencioso */ }
+  } catch (_) {}
 }
 
 startBtn.addEventListener('click', () => {
@@ -634,12 +574,12 @@ startBtn.addEventListener('click', () => {
 
 muteBtn.addEventListener('click', () => {
   muted = !muted;
-  if (audioCtx) audioCtx.suspend().then(() => {
-    if (!muted) audioCtx.resume();
-  });
+  if (audioCtx) {
+    if (muted) audioCtx.suspend();
+    else audioCtx.resume();
+  }
   muteBtn.textContent = muted ? '🔇' : '🔊';
   muteBtn.classList.toggle('muted', muted);
 });
 
-// garante que canvas não roube gestos
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
