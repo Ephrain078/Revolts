@@ -1,27 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3134798557631847"
-     crossorigin="anonymous"></script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Grid</title>
+    <title>Metaverse Grid</title>
     <link rel="stylesheet" href="style.css">
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"
-            }
-        }
-    </script>
 </head>
 <body>
-    <div id="ui">
-        <h1>The Grid</h1>
+    <div id="ui-overlay">
+        <div id="stats">Nível: <span id="level">1</span> | Blocos: <span id="blocks">0</span></div>
     </div>
-    <script type="module" src="main.js"></script>
+    <canvas id="gameCanvas"></canvas>
+    <script src="main.js"></script>
 </body>
 </html>
