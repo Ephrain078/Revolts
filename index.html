@@ -1,67 +1,49 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>REVOLTS 3D</title>
-<style>
-html,body{margin:0;height:100%;background:#02050a;overflow:hidden;color:#0ff;font:14px monospace;user-select:none;touch-action:manipulation}
-canvas{position:fixed;inset:0;width:100%;height:100%}
-#h{position:fixed;top:max(12px,env(safe-area-inset-top));left:0;right:0;text-align:center;text-shadow:0 0 10px #0ff;pointer-events:none}
-#b{position:fixed;left:0;right:0;bottom:max(16px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;padding:0 16px}
-button{font:inherit;font-size:30px;color:#0ff;background:#0ff1;border:1px solid #0ff8;width:42vw;max-width:200px;height:80px}
-button:active{background:#0ff4}
-</style>
-<div id="h">REVOLTS 3D · toque ◀ ou ▶ para começar</div>
-<canvas id="c"></canvas>
-<div id="b"><button id="l">◀</button><button id="r">▶</button></div>
-<script>
-/* REVOLTS 3D — motor 3D próprio (projeção em perspectiva + wireframe), sem bibliotecas.
-   Só linhas: custo baixo e visual Tron. Resolução se ajusta sozinha ao aparelho. */
-const N = 96, H = N >> 1, $ = id => document.getElementById(id), cv = $('c'), c2 = cv.getContext('2d');
-const COL = ['#00f0ff', '#ff7a00', '#ff2bd6', '#ffe600'];
-const g = new Uint8Array(N * N); // 0 livre · 255 prédio · 1..4 trilha
-const X = new Int16Array(4), Z = new Int16Array(4), PX = new Int16Array(4), PZ = new Int16Array(4),
-      DX = new Int8Array(4), DZ = new Int8Array(4), NX = new Int16Array(4), NZ = new Int16Array(4),
-      al = new Uint8Array(4), dead = new Uint8Array(4), VX = new Float32Array(4), VZ = new Float32Array(4);
-const MV = 400, TV = new Int16Array(4 * MV * 2), TN = new Uint16Array(4); // vértices das trilhas (só as curvas)
-const o = Math.round(N * .35), SP = [[-o, -o, 1, 0], [o, o, -1, 0], [-o, o, 0, -1], [o, -o, 0, 1]];
-const NODES = [[0, 0], [50, 50], [-50, -50], [100, 0], [0, 100], [-100, 20], [30, -80]]; // Palmas
-const BLD = [];
-let running = 0, ticks = 0, kills = 0, T = .09, acc = 0, q0 = 0, q1 = 0, best = 0, ys = 0, last = 0, sc = Math.min(devicePixelRatio || 1, 1.5), slow = 0;
-try { best = +localStorage.getItem('r3') || 0; } catch (e) {}
-const inb = (x, z) => x >= 0 && z >= 0 && x < N && z < N, lerp = (a, b, t) => a + (b - a) * t;
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>The Grid</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div id="hud">
+        <div id="logo">REVOLTS</div>
+        <div id="stat">0 pts · 3 rivais</div>
+    </div>
 
-/* ---------- mundo e regras (grade discreta) ---------- */
-function addB(x0, z0, w, d, h) {
-  if (x0 < 1 || z0 < 1 || x0 + w > N - 1 || z0 + d > N - 1) return;
-  for (let z = z0; z < z0 + d; z++) for (let x = x0; x < x0 + w; x++) g[z * N + x] = 255;
-  BLD.push([x0 - H, z0 - H, w, d, h]);
-}
-function init() {
-  g.fill(0); BLD.length = 0;
-  NODES.forEach(([a, b], i) => {
-    const cx = H + Math.round(a * N / 211), cz = H + Math.round(b * N / 211);
-    addB(cx - 1, cz - 1, 3, 3, 6 + ((i * 37 + 11) % 8)); addB(cx + 4, cz + 2, 2, 2, 3 + i % 3);
-  });
-}
-function vtx(i) { const k = (i * MV + TN[i]) * 2; if (TN[i] < MV) { TV[k] = X[i]; TV[k + 1] = Z[i]; TN[i]++; } }
-function start() {
-  init(); ticks = kills = 0; T = .09; acc = 0; q0 = q1 = 0; ys = Math.PI / 2;
-  for (let i = 0; i < 4; i++) {
-    const s = SP[i]; X[i] = PX[i] = H + s[0]; Z[i] = PZ[i] = H + s[1]; DX[i] = s[2]; DZ[i] = s[3]; al[i] = 1;
-    g[Z[i] * N + X[i]] = i + 1; TN[i] = 0; vtx(i);
-  }
-  running = 1;
-}
-function turn(i, d) { const x = DX[i]; if (d < 0) { DX[i] = DZ[i]; DZ[i] = -x; } else { DX[i] = -DZ[i]; DZ[i] = x; } vtx(i); }
-function look(i, dx, dz) {
-  let n = 0, x = X[i] + dx, z = Z[i] + dz;
-  while (n < 12 && inb(x, z) && !g[z * N + x]) { n++; x += dx; z += dz; }
-  return n;
-}
-function steer(i) {
-  if (!i) { const d = q0; if (d) { q0 = q1; q1 = 0; turn(0, d); } return; }
-  const a = look(i, DX[i], DZ[i]);
-  if (a > 3 && Math.random() > .012) return;
-  const l = look(i, DZ[i], -DX[i]), r = look(i, -DZ[i], DX[i]);
-  if (a <= 3 ? (l || r) : Math.max(l, r) > 8) turn(i, l == r ? (Math.random() < .5 ? -1 : 1) : l > r ? -1 : 1);
-}
+    <div id="screen">
+        <div class="card">
+            <h1 id="ttl">REVOLTS 3D</h1>
+            <p id="msg">
+                Arena Tron 3D em Palmas.<br><br>
+                Controles:<br>
+                Teclas <b>W A S D</b> ou <b>Setas (▲ ▼ ◄ ►)</b><br>
+                No celular, use o D-Pad de botões virtuais.
+            </p>
+            <button id="go">JOGAR</button>
+        </div>
+    </div>
+
+    <div id="dpad">
+        <div class="row">
+            <button id="btn-up" class="pad-btn">▲</button>
+        </div>
+        <div class="row">
+            <button id="btn-left" class="pad-btn">◄</button>
+            <button id="btn-down" class="pad-btn">▼</button>
+            <button id="btn-right" class="pad-btn">►</button>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
