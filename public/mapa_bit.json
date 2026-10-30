@@ -1,7 +1,7 @@
 {
   "name": "tron-grid-runner",
-  "version": "1.0.0",
-  "description": "Mundo aberto procedural em Three.js inspirado no universo Tron com motos de luz e neon cyberpunk.",
+  "version": "1.1.0",
+  "description": "Mundo aberto procedural plano inspirado em Tron com joystick analógico estilo MIR4 e neon ciano.",
   "type": "module",
   "main": "main.js",
   "scripts": {
@@ -9,17 +9,7 @@
     "dev": "npx serve . -l 3000",
     "serve": "python3 -m http.server 8080"
   },
-  "keywords": [
-    "threejs",
-    "webgl",
-    "tron",
-    "cyberpunk",
-    "procedural",
-    "infinite-world",
-    "light-cycle",
-    "neon",
-    "game"
-  ],
+  "keywords": ["threejs", "webgl", "tron", "neon", "infinite-world", "joystick", "mobile", "game"],
   "author": "Grid Runner",
   "license": "MIT",
   "dependencies": {
