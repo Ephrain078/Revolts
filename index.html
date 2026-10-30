@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>TRON // GRID RUNNER</title>
+<title>The Grid</title>
 <link rel="stylesheet" href="style.css">
 <script type="importmap">
 {
@@ -28,8 +28,8 @@
         <span class="value"><span id="speed">0</span> <small>km/h</small></span>
       </div>
       <div class="stat">
-        <span class="label">SETOR</span>
-        <span class="value accent" id="zone">Ciano</span>
+        <span class="label">DISTÂNCIA</span>
+        <span class="value accent" id="dist">0 m</span>
       </div>
       <div class="stat">
         <span class="label">COORDENADAS</span>
@@ -45,15 +45,9 @@
   </div>
 </div>
 
-<div id="touch">
-  <div class="pad">
-    <button class="tbtn" id="btnLeft" aria-label="Esquerda">◀</button>
-    <button class="tbtn" id="btnRight" aria-label="Direita">▶</button>
-  </div>
-  <div class="pad">
-    <button class="tbtn small" id="btnBrake" aria-label="Frear">▼</button>
-    <button class="tbtn accent" id="btnGas" aria-label="Acelerar">▲</button>
-  </div>
+<!-- Joystick analógico (estilo MIR4) -->
+<div id="joystick">
+  <div id="joystickKnob"></div>
 </div>
 
 <button id="muteBtn" title="Som">🔊</button>
@@ -63,7 +57,7 @@
     <h1>TRON<em>//</em>GRID</h1>
     <div class="sub">Sandbox de Luz</div>
     <p class="desc">
-      Explore um mundo infinito de neon procedural. Cada curva gera um novo setor.
+      Um plano infinito de neon. Arraste o joystick para acelerar, frear e virar 90°.
     </p>
     <div class="keys">
       <div class="key-row"><span class="keycap">W</span><span class="keycap">↑</span> Acelerar</div>
@@ -72,7 +66,7 @@
       <div class="key-row"><span class="keycap">D</span><span class="keycap">→</span> Virar 90° Dir.</div>
     </div>
     <button id="startBtn">▶ INICIAR EXECUÇÃO</button>
-    <p class="hint">Touch disponível em dispositivos móveis</p>
+    <p class="hint">Joystick analógico disponível em dispositivos móveis</p>
   </div>
 </div>
 
