@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Tron Light Cycle Arena</title>
     <style>
         body {
@@ -10,6 +10,7 @@
             overflow: hidden;
             background-color: #000;
             font-family: sans-serif;
+            touch-action: none;
         }
         #info {
             position: absolute;
@@ -17,7 +18,7 @@
             width: 100%;
             text-align: center;
             color: #0ff;
-            font-size: 18px;
+            font-size: 16px;
             text-shadow: 0 0 10px #0ff;
             pointer-events: none;
             z-index: 10;
@@ -40,11 +41,50 @@
         #audio-control:hover {
             background: rgba(0, 255, 255, 0.4);
         }
+        /* Estilo para os botões de toque no celular */
+        .touch-controls {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .touch-btn {
+            background: rgba(0, 255, 255, 0.25);
+            border: 2px solid #0ff;
+            color: #0ff;
+            font-size: 24px;
+            font-weight: bold;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            cursor: pointer;
+        }
+        .touch-btn:active {
+            background: rgba(0, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
-    <div id="info">Use as setas ESQUERDA e DIREITA para pilotar</div>
+    <div id="info">Use as Setas / A-D ou os botões na tela para pilotar</div>
     <button id="audio-control" onclick="toggleAudio()">Ligar Trilha Sonora (The Grid)</button>
+
+    <!-- Controles tábeis para celular -->
+    <div class="touch-controls">
+        <button class="touch-btn" id="btn-left">◀</button>
+        <button class="touch-btn" id="btn-right">▶</button>
+    </div>
 
     <!-- Player oculto do YouTube para a trilha sonora -->
     <div id="youtube-player" style="display:none;"></div>
@@ -63,7 +103,7 @@
             player = new YT.Player('youtube-player', {
                 height: '0',
                 width: '0',
-                videoId: 'tFXYuw96d0c', // ID do vídeo fornecido: The Grid - Daft Punk
+                videoId: 'tFXYuw96d0c', // ID da trilha sonora: The Grid - Daft Punk[span_2](start_span)[span_2](end_span)
                 playerVars: {
                     'autoplay': 0,
                     'loop': 1,
@@ -105,7 +145,7 @@
         pointLight.position.set(0, 20, 0);
         scene.add(pointLight);
 
-        // Criação da Arena (Estádio / Grade 3D)
+        // Criação da Arena (Estádio / Grade 3D)[span_3](start_span)[span_3](end_span)
         const arenaSize = 160;
         const gridHelper = new THREE.GridHelper(arenaSize, 40, 0x00ffff, 0x003333);
         gridHelper.position.y = -0.1;
@@ -134,14 +174,14 @@
 
         // Sistema das Motos de Luz
         const bikes = [];
-        const speed = 0.8; // Velocidade constante igual para todas as motos
+        const speed = 0.8; // Velocidade constante igual para todas as motos[span_4](start_span)[span_4](end_span)
 
         class LightCycle {
             constructor(color, x, z, angle) {
                 this.color = color;
                 this.mesh = new THREE.Group();
 
-                // Corpo da Moto
+                // Corpo da Moto[span_5](start_span)[span_5](end_span)
                 const bodyGeom = new THREE.BoxGeometry(1, 1.2, 3);
                 const bodyMat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.8 });
                 this.body = new THREE.Mesh(bodyGeom, bodyMat);
@@ -159,7 +199,7 @@
             update() {
                 if (!this.alive) return;
 
-                // Movimento constante para frente baseado na direção
+                // Movimento constante para frente baseado na direção[span_6](start_span)[span_6](end_span)
                 this.mesh.position.x += Math.sin(this.direction) * speed;
                 this.mesh.position.z += Math.cos(this.direction) * speed;
 
@@ -174,24 +214,24 @@
 
             turnLeft() {
                 if (!this.alive) return;
-                this.direction += Math.PI / 2; // Gira 90 graus para a esquerda
+                this.direction += Math.PI / 2; // Gira 90 graus para a esquerda[span_7](start_span)[span_7](end_span)
                 this.mesh.rotation.y = this.direction;
             }
 
             turnRight() {
                 if (!this.alive) return;
-                this.direction -= Math.PI / 2; // Gira 90 graus para a direita
+                this.direction -= Math.PI / 2; // Gira 90 graus para a direita[span_8](start_span)[span_8](end_span)
                 this.mesh.rotation.y = this.direction;
             }
         }
 
-        // Criando as 4 motos na arena com posições iniciais simétricas
+        // Criando as 4 motos na arena com posições iniciais simétricas[span_9](start_span)[span_9](end_span)
         bikes.push(new LightCycle(0x00ffff, 0, 50, 0));           // Jogador 1 (Azul)
         bikes.push(new LightCycle(0xff00ff, 0, -50, Math.PI));      // Moto 2 (Magenta)
         bikes.push(new LightCycle(0xffff00, 50, 0, Math.PI/2));     // Moto 3 (Amarela)
         bikes.push(new LightCycle(0x00ff00, -50, 0, -Math.PI/2));   // Moto 4 (Verde)
 
-        // Controles de Duas Teclas (Setas Esquerda / Direita ou A / D)
+        // Controles de Teclado (Computador)
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 bikes[0].turnLeft();
@@ -200,22 +240,40 @@
             }
         });
 
+        // Controles de Toque (Celular / Tablet)
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            bikes[0].turnLeft();
+        });
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            bikes[0].turnRight();
+        });
+
+        // Suporte para cliques comuns do mouse nos botões mobile (caso testado no PC)
+        document.getElementById('btn-left').addEventListener('click', () => {
+            bikes[0].turnLeft();
+        });
+        document.getElementById('btn-right').addEventListener('click', () => {
+            bikes[0].turnRight();
+        });
+
         // Loop de Animação e Jogo
         function animate() {
             requestAnimationFrame(animate);
 
-            // Atualiza o movimento de todas as motos
+            // Atualiza o movimento de todas as motos[span_10](start_span)[span_10](end_span)
             bikes.forEach((bike, index) => {
                 bike.update();
 
-                // Lógica simples de IA para as outras 3 motos mudarem de direção periodicamente
+                // Lógica simples de IA para as outras 3 motos mudarem de direção periodicamente[span_11](start_span)[span_11](end_span)
                 if (index > 0 && bike.alive && Math.random() < 0.02) {
                     if (Math.random() > 0.5) bike.turnLeft();
                     else bike.turnRight();
                 }
             });
 
-            // Câmera em terceira pessoa seguindo suavemente a moto do jogador principal
+            // Câmera em terceira pessoa seguindo suavemente a moto do jogador principal[span_12](start_span)[span_12](end_span)
             const player = bikes[0];
             const targetCamPos = new THREE.Vector3(
                 player.mesh.position.x - Math.sin(player.direction) * 15,
