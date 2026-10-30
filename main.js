@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 class NeonVoxelEngine {
     constructor() {
@@ -12,7 +12,7 @@ class NeonVoxelEngine {
         
         this.chunks = new Map();
         this.chunkSize = 16;
-        this.voxelSize = 2; // Tamanho do bloco Minecraftiano
+        this.voxelSize = 2; // Tamanho do bloco Mincraftiano
         
         this.generateInitialWorld();
         this.animate();
@@ -147,4 +147,3 @@ class NeonVoxelEngine {
 }
 
 new NeonVoxelEngine();
-
