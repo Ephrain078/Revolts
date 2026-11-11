@@ -81,7 +81,6 @@ export class InfiniteGrid {
             this.chunkPool.push(mesh);
         }
 
-        // Pilares magenta
         this.pillarMesh = new THREE.InstancedMesh(
             new THREE.CylinderGeometry(0.8, 1.2, 12, 6),
             new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.85, fog: false }),
@@ -91,7 +90,6 @@ export class InfiniteGrid {
         this.pillarMesh.count = 0;
         this.pillarMesh.frustumCulled = false;
 
-        // Cristais ciano
         this.crystalMesh = new THREE.InstancedMesh(
             new THREE.OctahedronGeometry(1.5),
             new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.9, fog: false }),
