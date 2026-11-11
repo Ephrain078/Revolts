@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 
+const MIN_DIST = 180;   // se jogador chegar a menos disso...
+const MAX_DIST = 280;   // ...tesseract salta para essa distância
+
 export class Tesseract {
     constructor() {
         this.vertices = [];
@@ -31,10 +34,11 @@ export class Tesseract {
             color: 0xff00ff,
             transparent: true,
             opacity: 0.95,
+            fog: false,
         });
 
         this.mesh = new THREE.LineSegments(this.geometry, this.material);
-        this.mesh.position.set(0, 45, -120);
+        this.mesh.position.set(0, 60, -280);
         this.mesh.scale.setScalar(10);
 
         this.time = 0;
@@ -47,9 +51,10 @@ export class Tesseract {
         p[b] = x * s + y * c;
     }
 
-    update(dt) {
+    update(dt, camera) {
         this.time += dt;
 
+        // --- Rotação 4D + projeção para 3D ---
         const projected = [];
         for (const v of this.vertices) {
             const p = [v[0], v[1], v[2], v[3]];
@@ -65,13 +70,24 @@ export class Tesseract {
         const arr = this.geometry.attributes.position.array;
         let i = 0;
         for (const [a, b] of this.edges) {
-            arr[i++] = projected[a][0];
-            arr[i++] = projected[a][1];
-            arr[i++] = projected[a][2];
-            arr[i++] = projected[b][0];
-            arr[i++] = projected[b][1];
-            arr[i++] = projected[b][2];
+            arr[i++] = projected[a][0]; arr[i++] = projected[a][1]; arr[i++] = projected[a][2];
+            arr[i++] = projected[b][0]; arr[i++] = projected[b][1]; arr[i++] = projected[b][2];
         }
         this.geometry.attributes.position.needsUpdate = true;
+
+        // --- Fuga: jogador nunca alcança ---
+        const dx = this.mesh.position.x - camera.position.x;
+        const dz = this.mesh.position.z - camera.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+
+        if (dist < MIN_DIST && dist > 0.01) {
+            const scale = MAX_DIST / dist;
+            this.mesh.position.x = camera.position.x + dx * scale;
+            this.mesh.position.z = camera.position.z + dz * scale;
+        }
+
+        // --- Flutuação suave ---
+        this.mesh.position.y = 60 + Math.sin(this.time * 0.3) * 6;
+        this.mesh.rotation.y = this.time * 0.05;
     }
 }
