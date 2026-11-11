@@ -2,46 +2,56 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Grid</title>
   <link rel="stylesheet" href="style.css">
   <!-- Google AdSense Official Script -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3134798557631847" crossorigin="anonymous"></script>
+  <!-- Import Map do Three.js e OrbitControls para suporte nativo em ES Modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <header class="site-header">
     <a href="index.html" class="logo-text">REVOLTS</a>
     <nav class="main-nav">
       <a href="index.html" class="active">Jogo Grid</a>
-      <a href="sobre.html" class="">Sobre</a>
-      <a href="trabalhe-conosco.html" class="">Trabalhe Conosco</a>
-      <a href="fale-conosco.html" class="">Fale Conosco</a>
+      <a href="sobre.html">Sobre</a>
+      <a href="trabalhe-conosco.html">Trabalhe Conosco</a>
+      <a href="fale-conosco.html">Fale Conosco</a>
     </nav>
   </header>
 
-  <div id="game-container">
-    <div id="game-canvas-container"></div>
-    <div id="hud">
-      <div id="dist">DIST: 0 m</div>
-      <div id="fps">FPS: 0</div>
-    </div>
-    <div id="crosshair"></div>
-    <div id="joystick"><div id="stick"></div></div>
-    <div id="jumpBtn">SALTAR</div>
+  <!-- Container onde o Canvas 3D será injetado -->
+  <div id="app"></div>
+
+  <!-- HUD de Monitoramento de Performance -->
+  <div id="hud-stats">
+    <div>FPS: <span id="statFps">60</span></div>
+    <div>Vértices: <span id="statVerts">0</span></div>
+    <div>Draw Calls: <span id="statCalls">0</span></div>
   </div>
 
-    <!-- Bloco de Anúncio AdSense -->
-    <div class="ad-banner">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-3134798557631847"
-           data-ad-slot="1234567890"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-      <script>
-           (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-    </div>
+  <div id="boot">CARREGANDO GRID...</div>
+
+  <!-- Bloco de Anúncio AdSense -->
+  <div class="ad-banner">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-3134798557631847"
+         data-ad-slot="1234567890"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
 
   <footer class="site-footer">
     <nav>
@@ -57,7 +67,7 @@
     </div>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="main.js"></script>
+  <!-- Script principal executado como módulo ES6 -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
