@@ -1,73 +1,91 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #00e5ff;
+  touch-action: none;
+  font-family: monospace;
 }
 
-html,
-body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #02040a;
-    font-family: Arial, sans-serif;
-    touch-action: none;
+canvas { display: block; width: 100%; height: 100%; }
+
+#hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  font-size: 14px;
+  color: #00ffff;
+  text-shadow: 0 0 8px #00ffff, 0 0 16px #00ffff;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 1px;
 }
 
-#game-container {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #00ffff;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  pointer-events: none;
 }
 
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
+#joystick {
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5),
+              inset 0 0 20px rgba(0, 255, 255, 0.2);
+  display: none;
+  touch-action: none;
 }
 
-#game-title {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #00eaff;
-    font-size: 18px;
-    font-weight: bold;
-    letter-spacing: 5px;
-    text-shadow: 0 0 12px #00eaff;
-    pointer-events: none;
-    white-space: nowrap;
+#stick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 55px;
+  height: 55px;
+  margin: -27.5px 0 0 -27.5px;
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 20px #00ffff;
 }
 
-#instructions {
-    position: fixed;
-    left: 50%;
-    bottom: 15px;
-    transform: translateX(-50%);
-    color: #8caebc;
-    font-size: 11px;
-    text-align: center;
-    line-height: 1.6;
-    opacity: 0.7;
-    pointer-events: none;
+#jumpBtn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 255, 0.6);
+  background: rgba(0, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5),
+              inset 0 0 20px rgba(0, 255, 255, 0.2);
+  display: none;
+  touch-action: none;
+  color: #00ffff;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
 }
 
-button {
-    -webkit-tap-highlight-color: transparent;
+body.mobile #joystick,
+body.mobile #jumpBtn {
+  display: flex;
 }
 
-@media (max-width: 600px) {
-    #game-title {
-        top: 12px;
-        font-size: 13px;
-        letter-spacing: 3px;
-    }
-
-    #instructions {
-        bottom: 8px;
-        font-size: 9px;
-    }
+body.mobile #crosshair {
+  display: none;
 }
