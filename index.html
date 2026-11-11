@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="The Grid — Experiência 3D cyberpunk em primeira pessoa no navegador.">
+    <title>The Grid</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬢</text></svg>">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <div id="hud">
+        <div id="crosshair"></div>
+        <div id="top-bar">
+            <span class="logo">THE GRID</span>
+            <nav>
+                <a href="./pages/sobre.html">Sobre</a>
+                <a href="./pages/contato.html">Contato</a>
+                <a href="./pages/termos.html">Termos</a>
+                <a href="./pages/privacidade.html">Privacidade</a>
+            </nav>
+        </div>
+    </div>
+
+    <div id="mobile-ui" class="hidden">
+        <div id="joystick-base"><div id="joystick-knob"></div></div>
+        <button id="jump-button" aria-label="Pular">▲</button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+        }
+    }
+    </script>
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
