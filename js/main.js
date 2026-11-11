@@ -24,7 +24,9 @@ async function init() {
     // --- Controles ---
     let controls;
     if (isMobile) {
-        document.getElementById('mobile-ui').classList.remove('hidden');
+        const mobileUi = document.getElementById('mobile-ui');
+        if (mobileUi) mobileUi.classList.remove('hidden');
+        
         controls = new MobileControls(
             camera,
             document.getElementById('joystick-base'),
@@ -88,9 +90,9 @@ async function init() {
         hudTimer += dt;
         if (hudTimer >= 0.25) {
             const fps = Math.round(frameCount / hudTimer);
-            fpsEl.textContent   = fps;
-            distEl.textContent  = distance.toFixed(1);
-            chunkEl.textContent = `${grid.currentCX},${grid.currentCZ}`;
+            if (fpsEl) fpsEl.textContent   = fps;
+            if (distEl) distEl.textContent  = distance.toFixed(1);
+            if (chunkEl) chunkEl.textContent = `${grid.currentCX},${grid.currentCZ}`;
 
             // Resolução adaptativa
             if (fps < 45) {
