@@ -12,6 +12,7 @@ async function init() {
     const { scene, camera, renderer } = createScene();
 
     // --- Mundo ---
+    // Agora importamos InfiniteGrid (e não mais Grid)
     const grid = new InfiniteGrid();
     grid.addTo(scene);
 
