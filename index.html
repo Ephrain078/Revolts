@@ -3,28 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Grid</title>
-    <link rel="stylesheet" href="./css/style.css">
+    <title>The Grid — Revolts</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos gerais da interface principal */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ffff;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        header, footer {
+            pointer-events: auto;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 15px 25px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: 4px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+        nav {
+            margin-top: 10px;
+            display: flex;
+            gap: 20px;
+        }
+        nav a {
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: color 0.3s, text-shadow 0.3s;
+        }
+        nav a:hover {
+            color: #ff00ff;
+            text-shadow: 0 0 8px #ff00ff;
+        }
+        .instructions {
+            pointer-events: auto;
+            align-self: center;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 0, 255, 0.4);
+            padding: 20px 40px;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
+        }
+        .instructions p {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Container onde o Three.js vai injetar o canvas do jogo -->
-    <div id="game-container"></div>
 
-    <!-- Outros elementos de HUD / UI mobile -->
-    <div id="mobile-ui" class="hidden">
-        <div id="joystick-base">
-            <div id="joystick-knob"></div>
+    <!-- Container do WebGL / Three.js -->
+    <div id="canvas-container"></div>
+
+    <!-- Interface do Usuário (HUD) -->
+    <div class="ui-overlay">
+        <header>
+            <h1>THE GRID</h1>
+            <nav>
+                <a href="index.html">Início</a>
+                <a href="pages/sobre.html">Sobre</a>
+                <a href="pages/pages.html">Termos de Uso</a>
+                <a href="pages/privacidade.html">Privacidade</a>
+                <a href="pages/contato.html">Contato</a>
+            </nav>
+        </header>
+
+        <div class="instructions">
+            <p>CLIQUE PARA ENTRAR NA EXPERIÊNCIA</p>
+            <p style="font-size: 11px; color: #888;">Use W, A, S, D ou Setas para navegar | Mouse para olhar</p>
         </div>
-        <button id="jump-button">Pular</button>
+
+        <footer>
+            <p style="margin: 0; font-size: 12px; letter-spacing: 1px; text-align: center;">
+                © Revolts.com.br — Todos os direitos reservados.
+            </p>
+        </footer>
     </div>
 
-    <div id="hud">
-        FPS: <span id="fps-value">60</span> | 
-        Distância: <span id="dist-value">0.0</span>m | 
-        Chunk: <span id="chunk-value">0,0</span>
-    </div>
-
-    <!-- Script principal do projeto -->
-    <script type="module" src="./js/main.js"></script>
+    <!-- Scripts da Aplicação 3D -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
