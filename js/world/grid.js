@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 
+const CHUNK_SIZE = 100;
+const VIEW_RADIUS = 3;                 // 7x7 = 49 chunks visíveis
+const MAX_PILLARS = 150;
+const MAX_CRYSTALS = 300;
+
 const VERT = /* glsl */`
     varying vec2 vWorldPos;
     void main() {
@@ -12,8 +17,6 @@ const VERT = /* glsl */`
 const FRAG = /* glsl */`
     uniform float uTime;
     uniform vec3  uColor;
-    uniform float uFadeStart;
-    uniform float uFadeEnd;
     varying vec2 vWorldPos;
 
     float gridFactor(vec2 p, float spacing) {
@@ -27,44 +30,184 @@ const FRAG = /* glsl */`
         float major = gridFactor(vWorldPos, 10.0) * 0.85;
         float grid  = max(minor, major);
 
-        float dist  = length(vWorldPos);
-        float fade  = 1.0 - smoothstep(uFadeStart, uFadeEnd, dist);
+        float dist  = length(vWorldPos - cameraPosition.xz);
+        float fade  = 1.0 - smoothstep(200.0, 300.0, dist);
         float pulse = 0.85 + 0.15 * sin(uTime * 1.5 - dist * 0.3);
 
-        vec3 col = uColor * grid * fade * pulse;
-        gl_FragColor = vec4(col, grid * fade);
+        gl_FragColor = vec4(uColor * grid * fade * pulse, grid * fade);
     }
 `;
 
-export class Grid {
-    constructor() {
-        const geo = new THREE.PlaneGeometry(2000, 2000, 1, 1);
-        geo.rotateX(-Math.PI / 2);
+// Hash determinístico: mesmo chunk = mesmas decorações
+function hash01(x, z) {
+    let h = (x * 374761393 + z * 668265263) | 0;
+    h = ((h ^ (h >>> 13)) * 1274126177) | 0;
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
 
-        this.material = new THREE.ShaderMaterial({
+export class InfiniteGrid {
+    constructor() {
+        this.time = 0;
+        this.lastCX = null;
+        this.lastCZ = null;
+        this.currentCX = 0;
+        this.currentCZ = 0;
+
+        this.chunkPool = [];
+        this.activeChunks = new Map();
+
+        this.gridUniforms = {
+            uTime:  { value: 0 },
+            uColor: { value: new THREE.Color(0x00ffff) },
+        };
+
+        this.gridMaterial = new THREE.ShaderMaterial({
             vertexShader: VERT,
             fragmentShader: FRAG,
-            uniforms: {
-                uTime:      { value: 0 },
-                uColor:     { value: new THREE.Color(0x00ffff) },
-                uFadeStart: { value: 20 },
-                uFadeEnd:   { value: 180 },
-            },
+            uniforms: this.gridUniforms,
             transparent: true,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
         });
 
-        this.mesh = new THREE.Mesh(geo, this.material);
-        this.mesh.position.y = 0;
-        this.mesh.frustumCulled = false;
-        this.time = 0;
+        const chunkGeo = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE);
+        chunkGeo.rotateX(-Math.PI / 2);
+
+        const totalChunks = (VIEW_RADIUS * 2 + 1) ** 2;
+        for (let i = 0; i < totalChunks; i++) {
+            const mesh = new THREE.Mesh(chunkGeo, this.gridMaterial);
+            mesh.visible = false;
+            this.chunkPool.push(mesh);
+        }
+
+        // Decoração: pilares magenta
+        this.pillarMesh = new THREE.InstancedMesh(
+            new THREE.CylinderGeometry(0.8, 1.2, 12, 6),
+            new THREE.MeshBasicMaterial({
+                color: 0xff00ff,
+                transparent: true,
+                opacity: 0.85,
+                fog: false,
+            }),
+            MAX_PILLARS
+        );
+        this.pillarMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.pillarMesh.count = 0;
+        this.pillarMesh.frustumCulled = false;
+
+        // Decoração: cristais ciano flutuantes
+        this.crystalMesh = new THREE.InstancedMesh(
+            new THREE.OctahedronGeometry(1.5),
+            new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.9,
+                fog: false,
+            }),
+            MAX_CRYSTALS
+        );
+        this.crystalMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.crystalMesh.count = 0;
+        this.crystalMesh.frustumCulled = false;
+    }
+
+    addTo(scene) {
+        this.chunkPool.forEach(m => scene.add(m));
+        scene.add(this.pillarMesh);
+        scene.add(this.crystalMesh);
     }
 
     update(dt, camera) {
         this.time += dt;
-        this.material.uniforms.uTime.value = this.time;
-        this.mesh.position.x = camera.position.x;
-        this.mesh.position.z = camera.position.z;
+        this.gridUniforms.uTime.value = this.time;
+
+        const cx = Math.floor(camera.position.x / CHUNK_SIZE);
+        const cz = Math.floor(camera.position.z / CHUNK_SIZE);
+        this.currentCX = cx;
+        this.currentCZ = cz;
+
+        if (cx === this.lastCX && cz === this.lastCZ) return;
+        this.lastCX = cx;
+        this.lastCZ = cz;
+        this._rebuild(cx, cz);
+    }
+
+    _rebuild(cx, cz) {
+        for (const mesh of this.activeChunks.values()) {
+            mesh.visible = false;
+            this.chunkPool.push(mesh);
+        }
+        this.activeChunks.clear();
+
+        for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
+            for (let dz = -VIEW_RADIUS; dz <= VIEW_RADIUS; dz++) {
+                const chunkX = cx + dx;
+                const chunkZ = cz + dz;
+                const mesh = this.chunkPool.pop();
+                if (!mesh) continue;
+                mesh.position.set(
+                    chunkX * CHUNK_SIZE + CHUNK_SIZE / 2,
+                    0,
+                    chunkZ * CHUNK_SIZE + CHUNK_SIZE / 2
+                );
+                mesh.visible = true;
+                this.activeChunks.set(`${chunkX},${chunkZ}`, mesh);
+            }
+        }
+
+        this._rebuildDecorations(cx, cz);
+    }
+
+    _rebuildDecorations(cx, cz) {
+        const dummy = new THREE.Object3D();
+        let pCount = 0;
+        let cCount = 0;
+
+        for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
+            for (let dz = -VIEW_RADIUS; dz <= VIEW_RADIUS; dz++) {
+                const chunkX = cx + dx;
+                const chunkZ = cz + dz;
+                const baseX = chunkX * CHUNK_SIZE;
+                const baseZ = chunkZ * CHUNK_SIZE;
+
+                // Pilares: ~35% dos chunks
+                if (hash01(chunkX, chunkZ) < 0.35 && pCount < MAX_PILLARS) {
+                    const ox     = hash01(chunkX,          chunkZ + 1000)  * CHUNK_SIZE;
+                    const oz     = hash01(chunkX + 1000,   chunkZ)         * CHUNK_SIZE;
+                    const height = 8 + hash01(chunkX, chunkZ + 2000) * 25;
+
+                    dummy.position.set(baseX + ox, height / 2, baseZ + oz);
+                    dummy.scale.set(1, height / 12, 1);
+                    dummy.rotation.set(0, hash01(chunkX, chunkZ) * Math.PI, 0);
+                    dummy.updateMatrix();
+                    this.pillarMesh.setMatrixAt(pCount++, dummy.matrix);
+                }
+
+                // Cristais: 0 a 3 por chunk
+                const n = Math.floor(hash01(chunkX + 3000, chunkZ) * 4);
+                for (let i = 0; i < n && cCount < MAX_CRYSTALS; i++) {
+                    const ox    = hash01(chunkX + i * 100, chunkZ + 4000)      * CHUNK_SIZE;
+                    const oz    = hash01(chunkX + 5000,    chunkZ + i * 100)   * CHUNK_SIZE;
+                    const oy    = 3 + hash01(chunkX + i * 10, chunkZ + 6000)   * 15;
+                    const scale = 0.5 + hash01(chunkX + 7000, chunkZ + i * 50) * 1.5;
+
+                    dummy.position.set(baseX + ox, oy, baseZ + oz);
+                    dummy.scale.setScalar(scale);
+                    dummy.rotation.set(
+                        hash01(chunkX,        chunkZ + i) * Math.PI,
+                        hash01(chunkX + i,    chunkZ)     * Math.PI,
+                        0
+                    );
+                    dummy.updateMatrix();
+                    this.crystalMesh.setMatrixAt(cCount++, dummy.matrix);
+                }
+            }
+        }
+
+        this.pillarMesh.count = pCount;
+        this.pillarMesh.instanceMatrix.needsUpdate = true;
+        this.crystalMesh.count = cCount;
+        this.crystalMesh.instanceMatrix.needsUpdate = true;
     }
 }
