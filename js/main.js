@@ -12,7 +12,6 @@ async function init() {
     const { scene, camera, renderer } = createScene();
 
     // --- Mundo ---
-    // Agora importamos InfiniteGrid (e não mais Grid)
     const grid = new InfiniteGrid();
     grid.addTo(scene);
 
@@ -78,7 +77,7 @@ async function init() {
         fog.update(dt, camera);
         tesseract.update(dt, camera);
 
-        // Distância percorrida (plano XZ)
+        // Distância percorrida
         const dx = camera.position.x - lastPos.x;
         const dz = camera.position.z - lastPos.z;
         distance += Math.sqrt(dx * dx + dz * dz);
