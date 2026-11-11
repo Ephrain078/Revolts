@@ -45,6 +45,40 @@ html, body {
 }
 #top-bar nav a:hover { color: #ff00ff; text-shadow: 0 0 8px #ff00ff; }
 
+#stats-hud {
+    position: absolute;
+    top: 70px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-align: right;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    padding: 10px 14px;
+    border-radius: 4px;
+    min-width: 130px;
+}
+#stats-hud .stat {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: #00ffff;
+    text-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
+}
+#stats-hud .label {
+    color: #ff00ff;
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(255, 0, 255, 0.6);
+}
+#stats-hud .unit {
+    color: #ff00ff;
+    margin-left: 2px;
+}
+
 .hidden { display: none !important; }
 
 #mobile-ui { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
