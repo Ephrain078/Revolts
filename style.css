@@ -4,21 +4,61 @@ html, body {
   width: 100%;
   height: 100%;
   background: #000000;
-  color: #e0e0e0;
-  font-family: 'Segoe UI', sans-serif;
-  overflow-x: hidden;
+  color: #00ffff;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  overflow: hidden;
 }
 
+/* Cabeçalho fixo minimalista sobre o jogo */
+header.site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.logo-text {
+  color: #00ffff;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-decoration: none;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+}
+
+nav.main-nav a {
+  color: #00ffff;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 14px;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
+  transition: text-shadow 0.2s;
+}
+
+nav.main-nav a:hover, nav.main-nav a.active {
+  text-shadow: 0 0 12px #00ffff, 0 0 20px #00ffff;
+}
+
+/* Canvas ocupando 100% da tela ao fundo */
 #app {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
-  background: #000000;
+  z-index: 1;
 }
 
 canvas { display: block; width: 100%; height: 100%; }
 
+/* Mira Central */
 #crosshair {
   position: absolute;
   top: 50%;
@@ -33,18 +73,6 @@ canvas { display: block; width: 100%; height: 100%; }
   z-index: 10;
 }
 
-#hud-stats {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  color: #00ffff;
-  font-family: monospace;
-  font-size: 14px;
-  text-shadow: 0 0 8px #00ffff;
-  pointer-events: none;
-  z-index: 10;
-}
-
 /* Joystick Mobile */
 #joystick {
   position: absolute;
@@ -54,7 +82,7 @@ canvas { display: block; width: 100%; height: 100%; }
   height: 130px;
   border-radius: 50%;
   border: 2px solid rgba(0, 255, 255, 0.5);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
   display: none;
   touch-action: none;
@@ -73,30 +101,10 @@ canvas { display: block; width: 100%; height: 100%; }
   box-shadow: 0 0 10px #00ffff;
 }
 
-#jumpBtn {
-  position: absolute;
-  bottom: 40px;
-  right: 40px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 255, 255, 0.5);
-  background: rgba(0, 255, 255, 0.15);
-  color: #00ffff;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-family: monospace;
-  font-size: 12px;
-  touch-action: none;
-  z-index: 20;
-}
+body.mobile #joystick { display: flex; }
+body.mobile #crosshair { display: none; }
 
-body.mobile #joystick,
-body.mobile #jumpBtn {
-  display: flex;
-}
-
-body.mobile #crosshair {
-  display: none;
+/* Ocultar elementos fora da tela de jogo principal se necessário */
+.ad-banner, footer.site-footer {
+  display: none; 
 }
