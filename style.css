@@ -1,24 +1,270 @@
-/* style.css */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Define o fundo global da página como preto de noite */
-body {
-    margin: 0;
-    padding: 0;
-    background-color: #050508; /* Preto noite muito profundo */
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    min-height: 100vh;
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  color: #e0e0e0;
+  touch-action: manipulation;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  overflow-x: hidden;
 }
 
-/* Exemplo de elemento Neon Cyan sobre o fundo escuro */
-.neon-box, .hero-section {
-    background-color: #0d0e15; /* Card escuro */
-    border: 1px solid #00f3ff; /* Bordas neon ciano */
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); /* Glow neon */
+canvas { display: block; width: 100%; height: 100%; }
+
+/* HUD & Canvas Container */
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000000;
 }
 
-/* Títulos ou destaques em neon */
-.neon-text {
-    color: #00f3ff;
-    text-shadow: 0 0 8px rgba(0, 243, 255, 0.8);
+#hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  color: #00ffff;
+  text-shadow: 0 0 8px #00ffff, 0 0 16px #00ffff;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 1px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  z-index: 10;
+}
+
+#dist { font-size: 16px; font-weight: bold; }
+#fps  { font-size: 12px; opacity: 0.7; }
+
+#crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #00ffff;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#joystick {
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.2);
+  display: none;
+  touch-action: none;
+  z-index: 10;
+}
+
+#stick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 55px;
+  height: 55px;
+  margin: -27.5px 0 0 -27.5px;
+  border-radius: 50%;
+  background: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 20px #00ffff;
+}
+
+#jumpBtn {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 255, 0.6);
+  background: rgba(0, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.2);
+  display: none;
+  touch-action: none;
+  color: #00ffff;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  z-index: 10;
+}
+
+body.mobile #joystick,
+body.mobile #jumpBtn {
+  display: flex;
+}
+
+body.mobile #crosshair {
+  display: none;
+}
+
+/* UI & Page Styling */
+header.site-header {
+  background: #050508;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo-text {
+  color: #00ffff;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-decoration: none;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+}
+
+nav.main-nav a {
+  color: #cccccc;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 14px;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+
+nav.main-nav a:hover, nav.main-nav a.active {
+  color: #00ffff;
+  text-shadow: 0 0 8px #00ffff;
+}
+
+.page-container {
+  max-width: 960px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #0a0a0f;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 255, 255, 0.1);
+  line-height: 1.7;
+}
+
+.page-container h1 {
+  color: #00ffff;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+  margin-bottom: 20px;
+  font-size: 32px;
+}
+
+.page-container h2 {
+  color: #00ffff;
+  margin-top: 25px;
+  margin-bottom: 12px;
+  font-size: 22px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  padding-bottom: 5px;
+}
+
+.page-container p, .page-container ul {
+  margin-bottom: 15px;
+  color: #d0d0d0;
+}
+
+.page-container ul {
+  padding-left: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #00ffff;
+  font-weight: 600;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 12px;
+  background: #12131c;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  border-color: #00ffff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+}
+
+.btn-submit {
+  background: transparent;
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-submit:hover {
+  background: #00ffff;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+}
+
+/* Ad Banner Styles */
+.ad-banner {
+  margin: 25px auto;
+  text-align: center;
+  min-height: 90px;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Footer Styling */
+footer.site-footer {
+  background: #050508;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  padding: 25px 20px;
+  text-align: center;
+  color: #888888;
+  font-size: 13px;
+  margin-top: 40px;
+}
+
+footer.site-footer nav {
+  margin-bottom: 12px;
+}
+
+footer.site-footer nav a {
+  color: #aaaaaa;
+  text-decoration: none;
+  margin: 0 12px;
+  transition: color 0.2s;
+}
+
+footer.site-footer nav a:hover {
+  color: #00ffff;
+}
+
+.footer-copy {
+  margin-top: 8px;
+  color: #666666;
 }
