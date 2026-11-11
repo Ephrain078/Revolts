@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Revolts - 3D Grid Experience</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Google AdSense Official Script -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3134798557631847" crossorigin="anonymous"></script>
-  <!-- Import Map do Three.js para módulos ES6 -->
   <script type="importmap">
     {
       "imports": {
@@ -20,28 +18,18 @@
   <header class="site-header">
     <a href="index.html" class="logo-text">REVOLTS</a>
     <nav class="main-nav">
-      <a href="index.html" class="active">Jogo Grid</a>
+      <a href="index.html" class="active">Grid</a>
       <a href="sobre.html">Sobre</a>
-      <a href="trabalhe-conosco.html">Trabalhe Conosco</a>
-      <a href="fale-conosco.html">Fale Conosco</a>
+      <a href="trabalhe-conosco.html">Carreiras</a>
+      <a href="fale-conosco.html">Contato</a>
     </nav>
   </header>
 
-  <!-- Container do Jogo -->
   <div id="app">
     <div id="crosshair"></div>
-    <div id="instructions">Clique na tela para controlar e andar (WASD)</div>
+    <div id="joystick"><div id="stick"></div></div>
   </div>
 
-  <!-- HUD de Monitoramento -->
-  <div id="hud-stats">
-    <div>FPS: <span id="statFps">60</span></div>
-    <div>Distância: <span id="statDist">0 m</span></div>
-  </div>
-
-  <div id="boot">CARREGANDO MUNDO CYBER...</div>
-
-  <!-- Bloco de Anúncio AdSense -->
   <div class="ad-banner">
     <ins class="adsbygoogle"
          style="display:block"
@@ -49,23 +37,17 @@
          data-ad-slot="1234567890"
          data-ad-format="auto"
          data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
   <footer class="site-footer">
     <nav>
       <a href="index.html">Início</a> |
-      <a href="sobre.html">Sobre Nós</a> |
-      <a href="fale-conosco.html">Fale Conosco</a> |
-      <a href="trabalhe-conosco.html">Trabalhe Conosco</a> |
-      <a href="privacidade.html">Política de Privacidade</a> |
-      <a href="termos.html">Termos de Uso</a>
+      <a href="sobre.html">Sobre</a> |
+      <a href="privacidade.html">Privacidade</a> |
+      <a href="termos.html">Termos</a>
     </nav>
-    <div class="footer-copy">
-      © <span class="dynamic-year">2026</span> Revolts LTDA. Todos os direitos reservados.
-    </div>
+    <div class="footer-copy">© <span class="dynamic-year">2026</span> Revolts LTDA.</div>
   </footer>
 
   <script type="module" src="main.js"></script>
