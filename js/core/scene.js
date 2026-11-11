@@ -20,7 +20,10 @@ export function createScene() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 1);
-    document.getElementById('game-container').appendChild(renderer.domElement);
+
+    // Garante que se o container não existir, ele usa o body como fallback
+    const container = document.getElementById('game-container') || document.body;
+    container.appendChild(renderer.domElement);
 
     return { scene, camera, renderer };
 }
