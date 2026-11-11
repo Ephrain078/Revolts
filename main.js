@@ -1,17 +1,17 @@
 // ================= CONFIG PADRÃO =================
 let CONFIG = {
-  bgColor: "#000814",
-  fogColor: "#001a2e",
+  bgColor: "#000205",
+  fogColor: "#000205",
   gridColor: "#00ffff",
-  gridSecondary: "#0088aa",
+  gridSecondary: "#005577",
   gridSize: 400,
   divisions: 400,
   moveSpeed: 8,
   gravity: 22,
   jumpForce: 9,
   playerHeight: 1.7,
-  fogNear: 30,
-  fogFar: 150,
+  fogNear: 60,
+  fogFar: 220,
   maxPixelRatio: 1.5,
   minPixelRatio: 0.5,
   targetFPS: 60
@@ -32,7 +32,7 @@ function init() {
 
   const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
 
-  // ---------- RENDERER OTIMIZADO ----------
+  // ---------- RENDERER ----------
   const renderer = new THREE.WebGLRenderer({
     antialias: false,
     powerPreference: "high-performance",
@@ -46,6 +46,7 @@ function init() {
   document.body.appendChild(renderer.domElement);
 
   // ---------- GRADE NEON ----------
+  // Grade fina: ciano escuro, sem lavar a tela
   const gridFine = new THREE.GridHelper(
     CONFIG.gridSize,
     Math.min(CONFIG.divisions, 200),
@@ -53,11 +54,12 @@ function init() {
     new THREE.Color(CONFIG.gridSecondary)
   );
   gridFine.material.transparent = true;
-  gridFine.material.opacity = 0.85;
+  gridFine.material.opacity = 0.45;   // bem discreta
   gridFine.material.depthWrite = false;
   gridFine.frustumCulled = false;
   scene.add(gridFine);
 
+  // Grade brilhante: linhas neon fortes a cada 10m
   const gridBright = new THREE.GridHelper(
     CONFIG.gridSize,
     40,
@@ -65,15 +67,16 @@ function init() {
     new THREE.Color(CONFIG.gridColor)
   );
   gridBright.material.transparent = true;
-  gridBright.material.opacity = 0.7;
+  gridBright.material.opacity = 1.0;
   gridBright.material.depthWrite = false;
   gridBright.position.y = 0.01;
   gridBright.frustumCulled = false;
   scene.add(gridBright);
 
   // ---------- LUZES ----------
-  scene.add(new THREE.AmbientLight(0x224466, 1.0));
-  const dir = new THREE.DirectionalLight(new THREE.Color(CONFIG.gridColor), 0.4);
+  // Ambiente MUITO baixa, só pra grade não ficar 100% preta
+  scene.add(new THREE.AmbientLight(0x081420, 0.6));
+  const dir = new THREE.DirectionalLight(new THREE.Color(CONFIG.gridColor), 0.25);
   dir.position.set(1, 2, 1);
   scene.add(dir);
 
@@ -207,11 +210,8 @@ function init() {
   const startPos = new THREE.Vector2(0, 0);
   let lastDistText = '';
 
-  // Formata a distância em metros (até 999m) ou km (a partir de 1000m)
   function formatDistance(meters) {
-    if (meters < 1000) {
-      return `${Math.floor(meters)} m`;
-    }
+    if (meters < 1000) return `${Math.floor(meters)} m`;
     return `${(meters / 1000).toFixed(2)} km`;
   }
 
@@ -242,7 +242,7 @@ function init() {
     }
   }
 
-  // ================= LOOP ADAPTATIVO =================
+  // ================= LOOP =================
   const clock = new THREE.Clock();
   const forward = new THREE.Vector3();
   const right = new THREE.Vector3();
@@ -299,7 +299,6 @@ function init() {
       markDirty();
     }
 
-    // HUD distância (m ou km)
     const dx = player.pos.x - startPos.x;
     const dz = player.pos.z - startPos.y;
     const distMeters = Math.hypot(dx, dz);
@@ -309,7 +308,6 @@ function init() {
       distEl.textContent = newText;
     }
 
-    // Câmera
     camera.position.copy(player.pos);
     lookDir.set(
       -Math.sin(player.yaw) * Math.cos(player.pitch),
@@ -322,7 +320,6 @@ function init() {
       player.pos.z + lookDir.z
     );
 
-    // Grade
     const gx = Math.round(player.pos.x / 10) * 10;
     const gz = Math.round(player.pos.z / 10) * 10;
     if (gridFine.position.x !== gx || gridFine.position.z !== gz) {
