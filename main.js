@@ -1,20 +1,19 @@
-// ================= CONFIG PADRÃO =================
+// ================= CONFIGURAÇÃO OTIMIZADA =================
 let CONFIG = {
   bgColor: "#000000",
   fogColor: "#000000",
   gridColor: "#00ffff",
   gridSecondary: "#003344",
   gridSize: 400,
-  divisions: 400,
+  divisions: 200,
   moveSpeed: 8,
   gravity: 22,
   jumpForce: 9,
   playerHeight: 1.7,
-  fogNear: 60,
-  fogFar: 220,
-  maxPixelRatio: 1.5,
-  minPixelRatio: 0.5,
-  targetFPS: 60
+  fogNear: 50,
+  fogFar: 200,
+  maxPixelRatio: 2.0, // Suporte a alta definição (incluindo 8K se o hardware suportar)
+  minPixelRatio: 0.5
 };
 
 fetch('public/config.json')
@@ -30,68 +29,63 @@ fetch('public/config.json')
 
 function initDynamicYear() {
   const currentYear = new Date().getFullYear();
-  const yearEls = document.querySelectorAll('.dynamic-year');
-  yearEls.forEach(el => {
+  document.querySelectorAll('.dynamic-year').forEach(el => {
     el.textContent = currentYear;
   });
 }
 
-// ================= INIT =================
+// ================= INICIALIZAÇÃO DE ALTA PERFORMANCE =================
 function init() {
   const container = document.getElementById('game-canvas-container');
   if (!container) return;
 
-  // ---------- CENA ----------
+  // ---------- CENA & NEBLINA ----------
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(CONFIG.bgColor);
   scene.fog = new THREE.Fog(new THREE.Color(CONFIG.fogColor), CONFIG.fogNear, CONFIG.fogFar);
 
   const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
 
-  // ---------- RENDERER ----------
+  // ---------- RENDERER ULTRA LEVE ----------
   const renderer = new THREE.WebGLRenderer({
-    antialias: false,
+    antialias: false, // Desativado para economizar GPU massivamente
     powerPreference: "high-performance",
     alpha: false,
     stencil: false,
     depth: true
   });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.maxPixelRatio));
+  
+  let currentPixelRatio = Math.min(devicePixelRatio, CONFIG.maxPixelRatio);
+  renderer.setPixelRatio(currentPixelRatio);
   renderer.setSize(innerWidth, innerHeight);
   renderer.autoClear = true;
   container.appendChild(renderer.domElement);
 
-  // ---------- GRADE NEON ----------
+  // ---------- GRADE NEON OTIMIZADA ----------
   const gridFine = new THREE.GridHelper(
     CONFIG.gridSize,
-    Math.min(CONFIG.divisions, 200),
+    Math.min(CONFIG.divisions, 100),
     new THREE.Color(CONFIG.gridColor),
     new THREE.Color(CONFIG.gridSecondary)
   );
   gridFine.material.transparent = true;
-  gridFine.material.opacity = 0.35;
+  gridFine.material.opacity = 0.3;
   gridFine.material.depthWrite = false;
   gridFine.frustumCulled = false;
   scene.add(gridFine);
 
   const gridBright = new THREE.GridHelper(
     CONFIG.gridSize,
-    40,
+    20,
     new THREE.Color(CONFIG.gridColor),
     new THREE.Color(CONFIG.gridColor)
   );
   gridBright.material.transparent = true;
-  gridBright.material.opacity = 0.9;
+  gridBright.material.opacity = 0.8;
   gridBright.material.depthWrite = false;
   gridBright.position.y = 0.01;
   gridBright.frustumCulled = false;
   scene.add(gridBright);
-
-  // ---------- LUZES ----------
-  scene.add(new THREE.AmbientLight(0x020a10, 0.4));
-  const dir = new THREE.DirectionalLight(new THREE.Color(CONFIG.gridColor), 0.2);
-  dir.position.set(1, 2, 1);
-  scene.add(dir);
 
   // ---------- JOGADOR ----------
   const player = {
@@ -104,15 +98,21 @@ function init() {
 
   // ================= CONTROLES =================
   const keys = {};
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-    || ('ontouchstart' in window);
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || ('ontouchstart' in window);
   if (isMobile) document.body.classList.add('mobile');
+
+  let needsRender = true;
+  function markDirty() { needsRender = true; }
 
   addEventListener('keydown', e => {
     keys[e.code] = true;
     if (e.code === 'Space') e.preventDefault();
+    markDirty();
   });
-  addEventListener('keyup', e => keys[e.code] = false);
+  addEventListener('keyup', e => {
+    keys[e.code] = false;
+    markDirty();
+  });
 
   // ---- Mouse look ----
   let mouseLocked = false;
@@ -185,10 +185,10 @@ function init() {
 
   if (jumpBtn) {
     jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); jumpPressed = true; markDirty(); }, { passive: false });
-    jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpPressed = false; }, { passive: false });
+    jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpPressed = false; markDirty(); }, { passive: false });
   }
 
-  // ---- Look por toque ----
+  // ---- Touch Look (Mobile) ----
   let lookTouchId = null, lastLook = null;
   canvas.addEventListener('touchstart', e => {
     if (!isMobile) return;
@@ -223,7 +223,7 @@ function init() {
 
   // ================= HUD =================
   const distEl = document.getElementById('dist');
-  const fpsEl  = document.getElementById('fps');
+  const fpsEl = document.getElementById('fps');
   const startPos = new THREE.Vector2(0, 0);
   let lastDistText = '';
 
@@ -232,47 +232,15 @@ function init() {
     return `${(meters / 1000).toFixed(2)} km`;
   }
 
-  // ================= ADAPTIVE RENDER =================
-  let currentPixelRatio = Math.min(devicePixelRatio, CONFIG.maxPixelRatio);
-  let fpsFrames = 0, lastFpsCheck = performance.now();
-  let displayFps = 0;
-  const LOW_FPS = 40, HIGH_FPS = 58;
-
-  function adjustQuality(now) {
-    const elapsed = now - lastFpsCheck;
-    if (elapsed < 1000) return;
-    displayFps = Math.round((fpsFrames * 1000) / elapsed);
-    if (fpsEl) fpsEl.textContent = `FPS: ${displayFps}`;
-    lastFpsCheck = now;
-    fpsFrames = 0;
-
-    let pr = currentPixelRatio;
-    if (displayFps < LOW_FPS && pr > CONFIG.minPixelRatio) {
-      pr = Math.max(CONFIG.minPixelRatio, pr - 0.15);
-    } else if (displayFps > HIGH_FPS && pr < CONFIG.maxPixelRatio) {
-      pr = Math.min(CONFIG.maxPixelRatio, pr + 0.1);
-    }
-    if (pr !== currentPixelRatio) {
-      currentPixelRatio = pr;
-      renderer.setPixelRatio(pr);
-      renderer.setSize(innerWidth, innerHeight, false);
-    }
-  }
-
-  // ================= LOOP =================
+  // ================= LOOP DE RENDERIZAÇÃO INTELIGENTE =================
   const clock = new THREE.Clock();
   const forward = new THREE.Vector3();
   const right = new THREE.Vector3();
   const move = new THREE.Vector3();
   const lookDir = new THREE.Vector3();
 
-  let dirty = true;
-  let lastFrameTime = performance.now();
-  const IDLE_RENDER_INTERVAL = 100;
-
-  function markDirty() { dirty = true; }
-
-  function update(dt) {
+  function updateGame() {
+    const dt = Math.min(clock.getDelta(), 0.05);
     forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
     right.set(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
 
@@ -289,8 +257,8 @@ function init() {
     const moving = mx !== 0 || mz !== 0;
     const wantJump = keys['Space'] || jumpPressed;
 
-    move.set(0, 0, 0);
     if (moving) {
+      move.set(0, 0, 0);
       move.addScaledVector(forward, mz);
       move.addScaledVector(right, mx);
       move.multiplyScalar(CONFIG.moveSpeed * dt);
@@ -316,6 +284,7 @@ function init() {
       markDirty();
     }
 
+    // Atualiza HUD de distância apenas se mudou
     const dx = player.pos.x - startPos.x;
     const dz = player.pos.z - startPos.y;
     const distMeters = Math.hypot(dx, dz);
@@ -331,12 +300,9 @@ function init() {
       Math.sin(player.pitch),
       -Math.cos(player.yaw) * Math.cos(player.pitch)
     );
-    camera.lookAt(
-      player.pos.x + lookDir.x,
-      player.pos.y + lookDir.y,
-      player.pos.z + lookDir.z
-    );
+    camera.lookAt(player.pos.x + lookDir.x, player.pos.y + lookDir.y, player.pos.z + lookDir.z);
 
+    // Reposiciona a grade ao redor do jogador infinitamente
     const gx = Math.round(player.pos.x / 10) * 10;
     const gz = Math.round(player.pos.z / 10) * 10;
     if (gridFine.position.x !== gx || gridFine.position.z !== gz) {
@@ -346,31 +312,27 @@ function init() {
       gridBright.position.z = gz;
       markDirty();
     }
-
-    return moving || !player.onGround || dirty;
   }
 
-  function loop(now) {
+  function loop() {
     requestAnimationFrame(loop);
 
-    if (!dirty && now - lastFrameTime < IDLE_RENDER_INTERVAL) return;
+    updateGame();
 
-    const dt = Math.min(clock.getDelta(), 0.05);
-    const shouldRender = update(dt);
-
-    if (shouldRender || dirty) {
+    // ALGORITMO DE PROCESSAMENTO NULO: Renderiza SOMENTE se houver movimento ou interação
+    if (needsRender || joyActive || movingCheck()) {
       renderer.render(scene, camera);
-      dirty = false;
+      needsRender = false;
     }
+  }
 
-    fpsFrames++;
-    lastFrameTime = now;
-    adjustQuality(now);
+  function movingCheck() {
+    return (keys['KeyW'] || keys['S'] || keys['A'] || keys['D'] || keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'] || !player.onGround);
   }
 
   requestAnimationFrame(loop);
 
-  // ================= RESIZE =================
+  // ================= RESIZE INTELIGENTE =================
   let resizeTimeout = null;
   addEventListener('resize', () => {
     if (resizeTimeout) clearTimeout(resizeTimeout);
@@ -379,16 +341,6 @@ function init() {
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight);
       markDirty();
-    }, 100);
-  });
-
-  // ================= VISIBILITY =================
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      renderer.setAnimationLoop(null);
-    } else {
-      clock.getDelta();
-      markDirty();
-    }
+    }, 150);
   });
 }
