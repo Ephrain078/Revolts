@@ -6,7 +6,9 @@ import { DesktopControls } from './controls/desktop.js';
 import { MobileControls } from './controls/mobile.js';
 import { initAds } from './utils/ads.js';
 
-const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+const isMobile =
+    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+    window.innerWidth < 768;
 
 async function init() {
     const { scene, camera, renderer } = createScene();
@@ -24,7 +26,9 @@ async function init() {
     // --- Controles ---
     let controls;
     if (isMobile) {
-        document.getElementById('mobile-ui').classList.remove('hidden');
+        const mobileUI = document.getElementById('mobile-ui');
+        if (mobileUI) mobileUI.classList.remove('hidden');
+
         controls = new MobileControls(
             camera,
             document.getElementById('joystick-base'),
@@ -34,34 +38,45 @@ async function init() {
         );
     } else {
         controls = new DesktopControls(camera, renderer.domElement);
+
+        // Libera o pointer lock através do overlay de instruções
+        const instructions = document.getElementById('instructions');
+        if (instructions) {
+            instructions.addEventListener('click', () => {
+                instructions.style.opacity = '0';
+                setTimeout(() => { instructions.style.display = 'none'; }, 500);
+                renderer.domElement.requestPointerLock();
+            });
+        }
     }
 
-    // --- Resize ---
+    // --- Resolução adaptativa (variáveis no escopo da função) ---
+    let MAX_PR = Math.min(window.devicePixelRatio, 2);
+    const MIN_PR = 0.75;
+    let currentPR = MAX_PR;
+    renderer.setPixelRatio(currentPR);
+
+    // --- Resize (preserva o PR adaptativo) ---
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        MAX_PR = Math.min(window.devicePixelRatio, 2);
+        currentPR = Math.min(currentPR, MAX_PR);
+        renderer.setPixelRatio(currentPR);
     });
 
     initAds();
 
     // --- HUD ---
-    const fpsEl   = document.getElementById('fps-value');
-    const distEl  = document.getElementById('dist-value');
+    const fpsEl = document.getElementById('fps-value');
+    const distEl = document.getElementById('dist-value');
     const chunkEl = document.getElementById('chunk-value');
 
     let hudTimer = 0;
     let frameCount = 0;
     let distance = 0;
     const lastPos = camera.position.clone();
-
-    // --- Resolução adaptativa ---
-    const MAX_PR = Math.min(window.devicePixelRatio, 2);
-    const MIN_PR = 0.75;
-    let currentPR = MAX_PR;
-    let lowFpsTime = 0;
-    let highFpsTime = 0;
 
     // --- Loop principal ---
     let lastTime = performance.now();
@@ -77,41 +92,26 @@ async function init() {
         fog.update(dt, camera);
         tesseract.update(dt, camera);
 
-        // Distância percorrida
         const dx = camera.position.x - lastPos.x;
         const dz = camera.position.z - lastPos.z;
         distance += Math.sqrt(dx * dx + dz * dz);
         lastPos.copy(camera.position);
 
-        // HUD (a cada 250ms)
         frameCount++;
         hudTimer += dt;
         if (hudTimer >= 0.25) {
             const fps = Math.round(frameCount / hudTimer);
-            fpsEl.textContent   = fps;
-            distEl.textContent  = distance.toFixed(1);
-            chunkEl.textContent = `${grid.currentCX},${grid.currentCZ}`;
+            if (fpsEl) fpsEl.textContent = fps;
+            if (distEl) distEl.textContent = distance.toFixed(1);
+            if (chunkEl) chunkEl.textContent = `${grid.currentCX},${grid.currentCZ}`;
 
-            // Resolução adaptativa
+            // --- Resolução adaptativa ---
             if (fps < 45) {
-                lowFpsTime += hudTimer;
-                highFpsTime = 0;
-                if (lowFpsTime > 2 && currentPR > MIN_PR) {
-                    currentPR = Math.max(MIN_PR, currentPR - 0.25);
-                    renderer.setPixelRatio(currentPR);
-                    lowFpsTime = 0;
-                }
-            } else if (fps > 58) {
-                highFpsTime += hudTimer;
-                lowFpsTime = 0;
-                if (highFpsTime > 3 && currentPR < MAX_PR) {
-                    currentPR = Math.min(MAX_PR, currentPR + 0.1);
-                    renderer.setPixelRatio(currentPR);
-                    highFpsTime = 0;
-                }
-            } else {
-                lowFpsTime = 0;
-                highFpsTime = 0;
+                currentPR = Math.max(MIN_PR, currentPR - 0.25);
+                renderer.setPixelRatio(currentPR);
+            } else if (fps > 58 && currentPR < MAX_PR) {
+                currentPR = Math.min(MAX_PR, currentPR + 0.1);
+                renderer.setPixelRatio(currentPR);
             }
 
             frameCount = 0;
