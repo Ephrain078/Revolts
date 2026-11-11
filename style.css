@@ -4,29 +4,28 @@ html, body {
   width: 100%;
   height: 100%;
   background: #000000;
-  color: #00ffff;
+  color: #e0e0e0;
   font-family: 'Segoe UI', Tahoma, sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-/* Cabeçalho fixo minimalista sobre o jogo */
+/* Header Neon Fixado */
 header.site-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  background: #050508;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
   padding: 15px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.6);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
 }
 
 .logo-text {
   color: #00ffff;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: 2px;
   text-decoration: none;
@@ -34,31 +33,30 @@ header.site-header {
 }
 
 nav.main-nav a {
-  color: #00ffff;
+  color: #cccccc;
   text-decoration: none;
   margin-left: 20px;
   font-size: 14px;
-  text-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
-  transition: text-shadow 0.2s;
+  transition: color 0.2s, text-shadow 0.2s;
 }
 
 nav.main-nav a:hover, nav.main-nav a.active {
-  text-shadow: 0 0 12px #00ffff, 0 0 20px #00ffff;
+  color: #00ffff;
+  text-shadow: 0 0 8px #00ffff, 0 0 15px #00ffff;
 }
 
-/* Canvas ocupando 100% da tela ao fundo */
+/* Container do Jogo 3D */
 #app {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100vw;
-  height: 100vh;
-  z-index: 1;
+  height: calc(100vh - 65px);
+  overflow: hidden;
+  background: #000000;
 }
 
 canvas { display: block; width: 100%; height: 100%; }
 
-/* Mira Central */
+/* Mira */
 #crosshair {
   position: absolute;
   top: 50%;
@@ -68,7 +66,7 @@ canvas { display: block; width: 100%; height: 100%; }
   margin: -3px 0 0 -3px;
   border-radius: 50%;
   background: #00ffff;
-  box-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
   pointer-events: none;
   z-index: 10;
 }
@@ -81,9 +79,9 @@ canvas { display: block; width: 100%; height: 100%; }
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  border: 2px solid rgba(0, 255, 255, 0.5);
+  border: 2px solid rgba(0, 255, 255, 0.6);
   background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
   display: none;
   touch-action: none;
   z-index: 20;
@@ -98,13 +96,104 @@ canvas { display: block; width: 100%; height: 100%; }
   margin: -25px 0 0 -25px;
   border-radius: 50%;
   background: rgba(0, 255, 255, 0.5);
-  box-shadow: 0 0 10px #00ffff;
+  box-shadow: 0 0 15px #00ffff;
 }
 
 body.mobile #joystick { display: flex; }
 body.mobile #crosshair { display: none; }
 
-/* Ocultar elementos fora da tela de jogo principal se necessário */
-.ad-banner, footer.site-footer {
-  display: none; 
+/* Páginas Institucionais (Sobre, Contato, etc.) */
+.page-container {
+  max-width: 960px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #0a0a0f;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 255, 255, 0.15);
+  line-height: 1.7;
+}
+
+.page-container h1 {
+  color: #00ffff;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.7);
+  margin-bottom: 20px;
+  font-size: 32px;
+}
+
+.page-container h2 {
+  color: #00ffff;
+  margin-top: 25px;
+  margin-bottom: 12px;
+  font-size: 22px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  padding-bottom: 5px;
+}
+
+.page-container p, .page-container ul {
+  margin-bottom: 15px;
+  color: #d0d0d0;
+}
+
+.page-container ul { padding-left: 20px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: #00ffff; font-weight: 600; }
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 12px;
+  background: #12131c;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 15px;
+  outline: none;
+}
+.form-group input:focus, .form-group textarea:focus {
+  border-color: #00ffff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.btn-submit {
+  background: transparent;
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  transition: all 0.2s;
+}
+.btn-submit:hover {
+  background: #00ffff;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.9);
+}
+
+/* Rodapé */
+footer.site-footer {
+  background: #050508;
+  border-top: 1px solid rgba(0, 255, 255, 0.3);
+  padding: 25px 20px;
+  text-align: center;
+  color: #888888;
+  font-size: 13px;
+}
+
+footer.site-footer nav { margin-bottom: 12px; }
+footer.site-footer nav a {
+  color: #aaaaaa;
+  text-decoration: none;
+  margin: 0 10px;
+  transition: color 0.2s;
+}
+footer.site-footer nav a:hover { color: #00ffff; text-shadow: 0 0 6px #00ffff; }
+.footer-copy { margin-top: 8px; color: #666666; }
+
+.ad-banner {
+  margin: 25px auto;
+  text-align: center;
+  min-height: 90px;
 }
