@@ -1,9 +1,9 @@
-// ================= REVOLTS: TESSERACT 4D ENGINE =================
+// ================= REVOLTS: TESSERACT ENGINE (ULTRA LIGHTWEIGHT) =================
 let CONFIG = {
   bgColor: "#000000",
   gridColor: "#00ffff",
-  hyperColor: "#ff00ff", // Detalhes em magenta cyberpunk para contraste
-  maxPixelRatio: 2.0
+  hyperColor: "#ff00ff",
+  maxPixelRatio: 1.5
 };
 
 fetch('public/config.json')
@@ -27,8 +27,6 @@ function initDynamicYear() {
 function initTesseractEngine() {
   const container = document.getElementById('game-canvas-container');
   if (!container) return;
-
-  // Limpa o container caso haja resquícios
   container.innerHTML = '';
 
   const scene = new THREE.Scene();
@@ -38,7 +36,7 @@ function initTesseractEngine() {
   camera.position.set(0, 0, 5);
 
   const renderer = new THREE.WebGLRenderer({
-    antialias: true,
+    antialias: false, // Desativado para economizar GPU massivamente
     powerPreference: "high-performance",
     alpha: false
   });
@@ -47,15 +45,13 @@ function initTesseractEngine() {
   renderer.setSize(innerWidth, innerHeight);
   container.appendChild(renderer.domElement);
 
-  // ---------- ALGORITMO FRACTAL: TESSERACT 8x8 (8 PASTAS DENTRO DE 8 PASTAS) ----------
-  // Gerador matemático de hipercubos aninhados recursivamente
+  // ---------- TESSERACT FRACTAL OTIMIZADO (8x8) ----------
   const tesseractGroup = new THREE.Group();
   scene.add(tesseractGroup);
 
   const hyperCubes = [];
-  const levels = 8; // 8 camadas fractais principais
+  const levels = 6; // Otimizado para 6 níveis profundos com zero lag
 
-  // Vértices base de um Cubo 3D
   const baseVertices = [
     [-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1],
     [-1,-1,1],  [1,-1,1],  [1,1,1],  [-1,1,1]
@@ -67,41 +63,34 @@ function initTesseractEngine() {
     [0,4],[1,5],[2,6],[3,7]
   ];
 
-  // Constrói a arquitetura fractal de 8 níveis
   for (let l = 0; l < levels; l++) {
-    const scaleFactor = Math.pow(0.65, l);
+    const scaleFactor = Math.pow(0.7, l);
     const subGroup = new THREE.Group();
     
-    // Criação de subpastas estruturais (8 sub-instâncias por nível)
-    for (let sub = 0; sub < 8; sub++) {
+    for (let sub = 0; sub < 4; sub++) { // Reduzido para 4 instâncias por nível (leveza extrema)
       const geometry = new THREE.BufferGeometry();
       const positions = [];
 
       baseEdges.forEach(edge => {
-        const p1 = baseVertices[edge[0]];
-        const p2 = baseVertices[edge[1]];
-        positions.push(...p1, ...p2);
+        positions.push(...baseVertices[edge[0]], ...baseVertices[edge[1]]);
       });
 
       geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 
-      // Material wireframe neon de alta performance com brilho aditivo
       const material = new THREE.LineBasicMaterial({
         color: l % 2 === 0 ? CONFIG.gridColor : CONFIG.hyperColor,
         transparent: true,
-        opacity: Math.max(0.15, 1.0 - (l * 0.1)),
-        linewidth: 1
+        opacity: Math.max(0.2, 1.0 - (l * 0.15))
       });
 
       const wireframeCube = new THREE.LineSegments(geometry, material);
       wireframeCube.scale.set(scaleFactor, scaleFactor, scaleFactor);
       
-      // Deslocamento simétrico tridimensional simulando rotação de hiper-espaço 4D
-      const angleOffset = (sub / 8) * Math.PI * 2;
+      const angleOffset = (sub / 4) * Math.PI * 2;
       wireframeCube.position.set(
-        Math.cos(angleOffset) * (l * 0.2),
-        Math.sin(angleOffset) * (l * 0.2),
-        (sub - 3.5) * 0.1 * scaleFactor
+        Math.cos(angleOffset) * (l * 0.15),
+        Math.sin(angleOffset) * (l * 0.15),
+        0
       );
 
       subGroup.add(wireframeCube);
@@ -111,51 +100,46 @@ function initTesseractEngine() {
     hyperCubes.push(subGroup);
   }
 
-  // ---------- ILUMINAÇÃO & GRADE AMBIENTE ----------
-  const gridHelper = new THREE.GridHelper(50, 50, new THREE.Color(CONFIG.gridColor), new THREE.Color(0x002233));
+  // Grade de fundo leve
+  const gridHelper = new THREE.GridHelper(40, 20, new THREE.Color(CONFIG.gridColor), new THREE.Color(0x001122));
   gridHelper.position.y = -2;
   scene.add(gridHelper);
 
-  // ================= INTERAÇÃO E CONTROLES SUAVES =================
+  // ================= INTERAÇÃO =================
   let mouseX = 0, mouseY = 0;
-  let targetRotationX = 0, targetRotationY = 0;
   const windowHalfX = innerWidth / 2;
   const windowHalfY = innerHeight / 2;
 
   document.addEventListener('mousemove', (event) => {
-    mouseX = (event.clientX - windowHalfX) * 0.001;
-    mouseY = (event.clientY - windowHalfY) * 0.001;
-  });
+    mouseX = (event.clientX - windowHalfX) * 0.0008;
+    mouseY = (event.clientY - windowHalfY) * 0.0008;
+  }, { passive: true });
 
-  // Suporte a toque para dispositivos móveis
   document.addEventListener('touchmove', (event) => {
     if (event.touches.length > 0) {
-      mouseX = (event.touches[0].clientX - windowHalfX) * 0.002;
-      mouseY = (event.touches[0].clientY - windowHalfY) * 0.002;
+      mouseX = (event.touches[0].clientX - windowHalfX) * 0.001;
+      mouseY = (event.touches[0].clientY - windowHalfY) * 0.001;
     }
   }, { passive: true });
 
-  // ================= LOOP DE ALTA PERFORMANCE (60 FPS / ZERO LAG) =================
+  // ================= LOOP DE RENDERIZAÇÃO ESTÁVEL (60 FPS TRAVADOS) =================
   const clock = new THREE.Clock();
+  let targetRotationX = 0, targetRotationY = 0;
 
   function animate() {
     requestAnimationFrame(animate);
 
-    const delta = clock.getDelta();
     const time = clock.getElapsedTime();
 
-    // Rotação fluida baseada em inércia e quaternions dimensionais 4D
-    targetRotationX = mouseY * 2 + Math.sin(time * 0.5) * 0.3;
-    targetRotationY = mouseX * 2 + time * 0.2;
+    targetRotationX = mouseY * 1.5 + Math.sin(time * 0.4) * 0.2;
+    targetRotationY = mouseX * 1.5 + time * 0.15;
 
     tesseractGroup.rotation.x += (targetRotationX - tesseractGroup.rotation.x) * 0.05;
     tesseractGroup.rotation.y += (targetRotationY - tesseractGroup.rotation.y) * 0.05;
 
-    // Animação fractal interna das 8 pastas aninhadas
     hyperCubes.forEach((group, index) => {
-      const speed = (index % 2 === 0 ? 1 : -1) * (0.1 + index * 0.02);
+      const speed = (index % 2 === 0 ? 1 : -1) * (0.08 + index * 0.01);
       group.rotation.z = time * speed;
-      group.rotation.x = time * (speed * 0.5);
     });
 
     renderer.render(scene, camera);
@@ -163,7 +147,6 @@ function initTesseractEngine() {
 
   animate();
 
-  // ---------- REDIMENSIONAMENTO AUTOMÁTICO ----------
   window.addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
