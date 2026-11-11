@@ -1,15 +1,19 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 html, body {
   width: 100%;
   height: 100%;
-  background: #000000;
+  background-color: #000000;
   color: #e0e0e0;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden;
 }
 
-/* Header Neon Fixado */
+/* --- Cabeçalho e Navegação Neon --- */
 header.site-header {
   background: #050508;
   border-bottom: 1px solid rgba(0, 255, 255, 0.3);
@@ -18,8 +22,7 @@ header.site-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
 }
 
@@ -45,7 +48,7 @@ nav.main-nav a:hover, nav.main-nav a.active {
   text-shadow: 0 0 8px #00ffff, 0 0 15px #00ffff;
 }
 
-/* Container do Jogo 3D */
+/* --- Container do Jogo 3D --- */
 #app {
   position: relative;
   width: 100vw;
@@ -54,9 +57,13 @@ nav.main-nav a:hover, nav.main-nav a.active {
   background: #000000;
 }
 
-canvas { display: block; width: 100%; height: 100%; }
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 
-/* Mira */
+/* --- Mira Central --- */
 #crosshair {
   position: absolute;
   top: 50%;
@@ -71,7 +78,7 @@ canvas { display: block; width: 100%; height: 100%; }
   z-index: 10;
 }
 
-/* Joystick Mobile */
+/* --- Controles Mobile --- */
 #joystick {
   position: absolute;
   bottom: 30px;
@@ -99,80 +106,21 @@ canvas { display: block; width: 100%; height: 100%; }
   box-shadow: 0 0 15px #00ffff;
 }
 
-body.mobile #joystick { display: flex; }
-body.mobile #crosshair { display: none; }
-
-/* Páginas Institucionais (Sobre, Contato, etc.) */
-.page-container {
-  max-width: 960px;
-  margin: 40px auto;
-  padding: 30px;
-  background: #0a0a0f;
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 8px;
-  box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 255, 255, 0.15);
-  line-height: 1.7;
+body.mobile #joystick {
+  display: flex;
 }
 
-.page-container h1 {
-  color: #00ffff;
-  text-shadow: 0 0 12px rgba(0, 255, 255, 0.7);
-  margin-bottom: 20px;
-  font-size: 32px;
+body.mobile #crosshair {
+  display: none;
 }
 
-.page-container h2 {
-  color: #00ffff;
-  margin-top: 25px;
-  margin-bottom: 12px;
-  font-size: 22px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-  padding-bottom: 5px;
+/* --- Rodapé Institucional e AdSense --- */
+.ad-banner {
+  margin: 25px auto;
+  text-align: center;
+  min-height: 90px;
 }
 
-.page-container p, .page-container ul {
-  margin-bottom: 15px;
-  color: #d0d0d0;
-}
-
-.page-container ul { padding-left: 20px; }
-
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; color: #00ffff; font-weight: 600; }
-.form-group input, .form-group textarea, .form-group select {
-  width: 100%;
-  padding: 12px;
-  background: #12131c;
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 4px;
-  color: #ffffff;
-  font-size: 15px;
-  outline: none;
-}
-.form-group input:focus, .form-group textarea:focus {
-  border-color: #00ffff;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-}
-
-.btn-submit {
-  background: transparent;
-  color: #00ffff;
-  border: 2px solid #00ffff;
-  padding: 12px 28px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-  transition: all 0.2s;
-}
-.btn-submit:hover {
-  background: #00ffff;
-  color: #000000;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.9);
-}
-
-/* Rodapé */
 footer.site-footer {
   background: #050508;
   border-top: 1px solid rgba(0, 255, 255, 0.3);
@@ -182,18 +130,23 @@ footer.site-footer {
   font-size: 13px;
 }
 
-footer.site-footer nav { margin-bottom: 12px; }
+footer.site-footer nav {
+  margin-bottom: 12px;
+}
+
 footer.site-footer nav a {
   color: #aaaaaa;
   text-decoration: none;
   margin: 0 10px;
   transition: color 0.2s;
 }
-footer.site-footer nav a:hover { color: #00ffff; text-shadow: 0 0 6px #00ffff; }
-.footer-copy { margin-top: 8px; color: #666666; }
 
-.ad-banner {
-  margin: 25px auto;
-  text-align: center;
-  min-height: 90px;
+footer.site-footer nav a:hover {
+  color: #00ffff;
+  text-shadow: 0 0 6px #00ffff;
+}
+
+.footer-copy {
+  margin-top: 8px;
+  color: #666666;
 }
