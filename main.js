@@ -1,155 +1,141 @@
-// ================= REVOLTS: TESSERACT ENGINE (ULTRA LIGHTWEIGHT) =================
-let CONFIG = {
-  bgColor: "#000000",
-  gridColor: "#00ffff",
-  hyperColor: "#ff00ff",
-  maxPixelRatio: 1.5
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ============================================================================
+// 1. CONFIGURAÇÃO
+// ============================================================================
+const CONFIG = {
+  gridSize: 300,        // Tamanho da malha
+  segments: 180,        // Resolução de linhas
+  colors: {
+    background: 0x000000,   // Preto absoluto
+    gridWireframe: 0x00ffff, // Ciano Neon puro
+    gridBase: 0x000a14,     // Azul escuro profundo na base
+    horizonFog: 0x000000
+  }
 };
 
-fetch('public/config.json')
-  .then(r => r.ok ? r.json() : Promise.reject())
-  .then(cfg => { CONFIG = { ...CONFIG, ...cfg }; })
-  .catch(() => {})
-  .finally(() => {
-    if (document.getElementById('game-canvas-container')) {
-      initTesseractEngine();
-    }
-    initDynamicYear();
-  });
+// ============================================================================
+// 2. CENA E RENDERER
+// ============================================================================
+const container = document.getElementById('app');
 
-function initDynamicYear() {
-  const currentYear = new Date().getFullYear();
-  document.querySelectorAll('.dynamic-year').forEach(el => {
-    el.textContent = currentYear;
-  });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(CONFIG.colors.background);
+scene.fog = new THREE.FogExp2(CONFIG.colors.horizonFog, 0.008);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 35, 80);
+
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+container.appendChild(renderer.domElement);
+
+// ============================================================================
+// 3. TERRENO PLANO VETORIAL
+// ============================================================================
+const geometry = new THREE.PlaneGeometry(
+  CONFIG.gridSize,
+  CONFIG.gridSize,
+  CONFIG.segments,
+  CONFIG.segments
+);
+geometry.rotateX(-Math.PI / 2);
+
+// Material Wireframe Estilo Tron / Ciano Neon
+const wireframeMaterial = new THREE.MeshBasicMaterial({
+  color: CONFIG.colors.gridWireframe,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.75
+});
+
+// Superfície base escura
+const baseMaterial = new THREE.MeshBasicMaterial({
+  color: CONFIG.colors.gridBase,
+  polygonOffset: true,
+  polygonOffsetFactor: 1,
+  polygonOffsetUnits: 1
+});
+
+const terrainWire = new THREE.Mesh(geometry, wireframeMaterial);
+const terrainBase = new THREE.Mesh(geometry, baseMaterial);
+
+const terrainGroup = new THREE.Group();
+terrainGroup.add(terrainWire);
+terrainGroup.add(terrainBase);
+scene.add(terrainGroup);
+
+// Grade Horizonte Estática Infinita
+const horizonGrid = new THREE.GridHelper(1000, 100, 0x00ffff, 0x003344);
+horizonGrid.position.y = -2;
+scene.add(horizonGrid);
+
+// ============================================================================
+// 4. CONTROLES E NAVEGAÇÃO
+// ============================================================================
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxPolarAngle = Math.PI * 0.48; // Trava para não ir abaixo do solo
+controls.minDistance = 10;
+controls.maxDistance = 250;
+
+// ============================================================================
+// 5. HUD E LOOP DE ANIMAÇÃO
+// ============================================================================
+const elFps = document.getElementById('statFps');
+const elVerts = document.getElementById('statVerts');
+const elCalls = document.getElementById('statCalls');
+const boot = document.getElementById('boot');
+
+setTimeout(() => {
+  if (boot) boot.classList.add('is-hidden');
+}, 1000);
+
+// Atualização automática do ano no rodapé
+const currentYear = new Date().getFullYear();
+document.querySelectorAll('.dynamic-year').forEach(el => {
+  el.textContent = currentYear;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'r' || e.key === 'R') {
+    camera.position.set(0, 35, 80);
+    controls.target.set(0, 0, 0);
+  }
+});
+
+let lastTime = performance.now();
+let frameCount = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const time = performance.now();
+  frameCount++;
+
+  // Animação de pulso suave da rede neon
+  wireframeMaterial.opacity = 0.6 + Math.sin(time * 0.002) * 0.15;
+
+  controls.update();
+  renderer.render(scene, camera);
+
+  // Atualização do HUD de Performance a cada 500ms
+  if (time - lastTime >= 500) {
+    if (elFps) elFps.textContent = Math.round((frameCount * 1000) / (time - lastTime));
+    if (elVerts) elVerts.textContent = geometry.attributes.position.count.toLocaleString('pt-BR');
+    if (elCalls) elCalls.textContent = renderer.info.render.calls;
+    frameCount = 0;
+    lastTime = time;
+  }
 }
 
-function initTesseractEngine() {
-  const container = document.getElementById('game-canvas-container');
-  if (!container) return;
-  container.innerHTML = '';
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(CONFIG.bgColor);
-
-  const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
-  camera.position.set(0, 0, 5);
-
-  const renderer = new THREE.WebGLRenderer({
-    antialias: false, // Desativado para economizar GPU massivamente
-    powerPreference: "high-performance",
-    alpha: false
-  });
-  
-  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.maxPixelRatio));
-  renderer.setSize(innerWidth, innerHeight);
-  container.appendChild(renderer.domElement);
-
-  // ---------- TESSERACT FRACTAL OTIMIZADO (8x8) ----------
-  const tesseractGroup = new THREE.Group();
-  scene.add(tesseractGroup);
-
-  const hyperCubes = [];
-  const levels = 6; // Otimizado para 6 níveis profundos com zero lag
-
-  const baseVertices = [
-    [-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1],
-    [-1,-1,1],  [1,-1,1],  [1,1,1],  [-1,1,1]
-  ];
-
-  const baseEdges = [
-    [0,1],[1,2],[2,3],[3,0],
-    [4,5],[5,6],[6,7],[7,4],
-    [0,4],[1,5],[2,6],[3,7]
-  ];
-
-  for (let l = 0; l < levels; l++) {
-    const scaleFactor = Math.pow(0.7, l);
-    const subGroup = new THREE.Group();
-    
-    for (let sub = 0; sub < 4; sub++) { // Reduzido para 4 instâncias por nível (leveza extrema)
-      const geometry = new THREE.BufferGeometry();
-      const positions = [];
-
-      baseEdges.forEach(edge => {
-        positions.push(...baseVertices[edge[0]], ...baseVertices[edge[1]]);
-      });
-
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-      const material = new THREE.LineBasicMaterial({
-        color: l % 2 === 0 ? CONFIG.gridColor : CONFIG.hyperColor,
-        transparent: true,
-        opacity: Math.max(0.2, 1.0 - (l * 0.15))
-      });
-
-      const wireframeCube = new THREE.LineSegments(geometry, material);
-      wireframeCube.scale.set(scaleFactor, scaleFactor, scaleFactor);
-      
-      const angleOffset = (sub / 4) * Math.PI * 2;
-      wireframeCube.position.set(
-        Math.cos(angleOffset) * (l * 0.15),
-        Math.sin(angleOffset) * (l * 0.15),
-        0
-      );
-
-      subGroup.add(wireframeCube);
-    }
-
-    tesseractGroup.add(subGroup);
-    hyperCubes.push(subGroup);
-  }
-
-  // Grade de fundo leve
-  const gridHelper = new THREE.GridHelper(40, 20, new THREE.Color(CONFIG.gridColor), new THREE.Color(0x001122));
-  gridHelper.position.y = -2;
-  scene.add(gridHelper);
-
-  // ================= INTERAÇÃO =================
-  let mouseX = 0, mouseY = 0;
-  const windowHalfX = innerWidth / 2;
-  const windowHalfY = innerHeight / 2;
-
-  document.addEventListener('mousemove', (event) => {
-    mouseX = (event.clientX - windowHalfX) * 0.0008;
-    mouseY = (event.clientY - windowHalfY) * 0.0008;
-  }, { passive: true });
-
-  document.addEventListener('touchmove', (event) => {
-    if (event.touches.length > 0) {
-      mouseX = (event.touches[0].clientX - windowHalfX) * 0.001;
-      mouseY = (event.touches[0].clientY - windowHalfY) * 0.001;
-    }
-  }, { passive: true });
-
-  // ================= LOOP DE RENDERIZAÇÃO ESTÁVEL (60 FPS TRAVADOS) =================
-  const clock = new THREE.Clock();
-  let targetRotationX = 0, targetRotationY = 0;
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    const time = clock.getElapsedTime();
-
-    targetRotationX = mouseY * 1.5 + Math.sin(time * 0.4) * 0.2;
-    targetRotationY = mouseX * 1.5 + time * 0.15;
-
-    tesseractGroup.rotation.x += (targetRotationX - tesseractGroup.rotation.x) * 0.05;
-    tesseractGroup.rotation.y += (targetRotationY - tesseractGroup.rotation.y) * 0.05;
-
-    hyperCubes.forEach((group, index) => {
-      const speed = (index % 2 === 0 ? 1 : -1) * (0.08 + index * 0.01);
-      group.rotation.z = time * speed;
-    });
-
-    renderer.render(scene, camera);
-  }
-
-  animate();
-
-  window.addEventListener('resize', () => {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-  });
-}
+animate();
