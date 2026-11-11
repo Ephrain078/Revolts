@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 const CHUNK_SIZE = 100;
-const VIEW_RADIUS = 3;                 // 7x7 = 49 chunks visíveis
+const VIEW_RADIUS = 3;
 const MAX_PILLARS = 150;
 const MAX_CRYSTALS = 300;
 
@@ -17,6 +17,7 @@ const VERT = /* glsl */`
 const FRAG = /* glsl */`
     uniform float uTime;
     uniform vec3  uColor;
+    uniform vec2  uCameraPos;
     varying vec2 vWorldPos;
 
     float gridFactor(vec2 p, float spacing) {
@@ -30,15 +31,14 @@ const FRAG = /* glsl */`
         float major = gridFactor(vWorldPos, 10.0) * 0.85;
         float grid  = max(minor, major);
 
-        float dist  = length(vWorldPos - cameraPosition.xz);
-        float fade  = 1.0 - smoothstep(200.0, 300.0, dist);
+        float dist  = length(vWorldPos - uCameraPos);
+        float fade  = 1.0 - smoothstep(180.0, 290.0, dist);
         float pulse = 0.85 + 0.15 * sin(uTime * 1.5 - dist * 0.3);
 
         gl_FragColor = vec4(uColor * grid * fade * pulse, grid * fade);
     }
 `;
 
-// Hash determinístico: mesmo chunk = mesmas decorações
 function hash01(x, z) {
     let h = (x * 374761393 + z * 668265263) | 0;
     h = ((h ^ (h >>> 13)) * 1274126177) | 0;
@@ -57,8 +57,9 @@ export class InfiniteGrid {
         this.activeChunks = new Map();
 
         this.gridUniforms = {
-            uTime:  { value: 0 },
-            uColor: { value: new THREE.Color(0x00ffff) },
+            uTime:      { value: 0 },
+            uColor:     { value: new THREE.Color(0x00ffff) },
+            uCameraPos: { value: new THREE.Vector2(0, 0) },
         };
 
         this.gridMaterial = new THREE.ShaderMaterial({
@@ -80,31 +81,20 @@ export class InfiniteGrid {
             this.chunkPool.push(mesh);
         }
 
-        // Decoração: pilares magenta
+        // Pilares magenta
         this.pillarMesh = new THREE.InstancedMesh(
             new THREE.CylinderGeometry(0.8, 1.2, 12, 6),
-            new THREE.MeshBasicMaterial({
-                color: 0xff00ff,
-                transparent: true,
-                opacity: 0.85,
-                fog: false,
-            }),
+            new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.85, fog: false }),
             MAX_PILLARS
         );
         this.pillarMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.pillarMesh.count = 0;
         this.pillarMesh.frustumCulled = false;
 
-        // Decoração: cristais ciano flutuantes
+        // Cristais ciano
         this.crystalMesh = new THREE.InstancedMesh(
             new THREE.OctahedronGeometry(1.5),
-            new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.9,
-                fog: false,
-            }),
+            new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.9, fog: false }),
             MAX_CRYSTALS
         );
         this.crystalMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -121,6 +111,7 @@ export class InfiniteGrid {
     update(dt, camera) {
         this.time += dt;
         this.gridUniforms.uTime.value = this.time;
+        this.gridUniforms.uCameraPos.value.set(camera.position.x, camera.position.z);
 
         const cx = Math.floor(camera.position.x / CHUNK_SIZE);
         const cz = Math.floor(camera.position.z / CHUNK_SIZE);
@@ -171,10 +162,9 @@ export class InfiniteGrid {
                 const baseX = chunkX * CHUNK_SIZE;
                 const baseZ = chunkZ * CHUNK_SIZE;
 
-                // Pilares: ~35% dos chunks
                 if (hash01(chunkX, chunkZ) < 0.35 && pCount < MAX_PILLARS) {
-                    const ox     = hash01(chunkX,          chunkZ + 1000)  * CHUNK_SIZE;
-                    const oz     = hash01(chunkX + 1000,   chunkZ)         * CHUNK_SIZE;
+                    const ox     = hash01(chunkX,        chunkZ + 1000) * CHUNK_SIZE;
+                    const oz     = hash01(chunkX + 1000, chunkZ)        * CHUNK_SIZE;
                     const height = 8 + hash01(chunkX, chunkZ + 2000) * 25;
 
                     dummy.position.set(baseX + ox, height / 2, baseZ + oz);
@@ -184,19 +174,18 @@ export class InfiniteGrid {
                     this.pillarMesh.setMatrixAt(pCount++, dummy.matrix);
                 }
 
-                // Cristais: 0 a 3 por chunk
                 const n = Math.floor(hash01(chunkX + 3000, chunkZ) * 4);
                 for (let i = 0; i < n && cCount < MAX_CRYSTALS; i++) {
-                    const ox    = hash01(chunkX + i * 100, chunkZ + 4000)      * CHUNK_SIZE;
-                    const oz    = hash01(chunkX + 5000,    chunkZ + i * 100)   * CHUNK_SIZE;
-                    const oy    = 3 + hash01(chunkX + i * 10, chunkZ + 6000)   * 15;
+                    const ox    = hash01(chunkX + i * 100, chunkZ + 4000)    * CHUNK_SIZE;
+                    const oz    = hash01(chunkX + 5000,    chunkZ + i * 100) * CHUNK_SIZE;
+                    const oy    = 3 + hash01(chunkX + i * 10, chunkZ + 6000) * 15;
                     const scale = 0.5 + hash01(chunkX + 7000, chunkZ + i * 50) * 1.5;
 
                     dummy.position.set(baseX + ox, oy, baseZ + oz);
                     dummy.scale.setScalar(scale);
                     dummy.rotation.set(
-                        hash01(chunkX,        chunkZ + i) * Math.PI,
-                        hash01(chunkX + i,    chunkZ)     * Math.PI,
+                        hash01(chunkX,     chunkZ + i) * Math.PI,
+                        hash01(chunkX + i, chunkZ)     * Math.PI,
                         0
                     );
                     dummy.updateMatrix();
