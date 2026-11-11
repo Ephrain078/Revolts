@@ -2,7 +2,6 @@ import { createScene } from './core/scene.js';
 import { InfiniteGrid } from './world/grid.js';
 import { HorizonFog } from './world/fog.js';
 import { Tesseract } from './world/tesseract.js';
-import { Sky } from './world/sky.js';
 import { DesktopControls } from './controls/desktop.js';
 import { MobileControls } from './controls/mobile.js';
 import { initAds } from './utils/ads.js';
@@ -21,9 +20,6 @@ async function init() {
 
     const tesseract = new Tesseract();
     scene.add(tesseract.mesh);
-
-    const sky = new Sky();
-    scene.add(sky.mesh);
 
     // --- Controles ---
     let controls;
@@ -60,17 +56,19 @@ async function init() {
     let distance = 0;
     const lastPos = camera.position.clone();
 
-    // --- Resolução adaptativa (60 FPS até em 8K) ---
+    // --- Resolução adaptativa ---
     const MAX_PR = Math.min(window.devicePixelRatio, 2);
     const MIN_PR = 0.75;
     let currentPR = MAX_PR;
     let lowFpsTime = 0;
     let highFpsTime = 0;
 
-    // --- Loop ---
+    // --- Loop principal ---
     let lastTime = performance.now();
+
     function animate(now) {
         requestAnimationFrame(animate);
+
         const dt = Math.min((now - lastTime) / 1000, 0.1);
         lastTime = now;
 
@@ -78,15 +76,14 @@ async function init() {
         grid.update(dt, camera);
         fog.update(dt, camera);
         tesseract.update(dt, camera);
-        sky.update(dt, camera);
 
-        // Distância horizontal percorrida
+        // Distância percorrida (plano XZ)
         const dx = camera.position.x - lastPos.x;
         const dz = camera.position.z - lastPos.z;
         distance += Math.sqrt(dx * dx + dz * dz);
         lastPos.copy(camera.position);
 
-        // HUD a cada 250ms
+        // HUD (a cada 250ms)
         frameCount++;
         hudTimer += dt;
         if (hudTimer >= 0.25) {
@@ -116,3 +113,18 @@ async function init() {
                 lowFpsTime = 0;
                 highFpsTime = 0;
             }
+
+            frameCount = 0;
+            hudTimer = 0;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    requestAnimationFrame(animate);
+}
+
+init().catch(err => {
+    console.error(err);
+    document.body.innerHTML = '<pre style="color:#ff00ff;padding:2em;font-family:monospace;background:#000;height:100vh;overflow:auto;">Erro ao iniciar The Grid:\n\n' + (err.stack || err) + '</pre>';
+});
