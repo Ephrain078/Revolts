@@ -20,8 +20,7 @@ export function createScene() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 1);
-    const container = document.getElementById('canvas-container');
-    container.appendChild(renderer.domElement);
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
 
     return { scene, camera, renderer };
 }
