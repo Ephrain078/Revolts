@@ -1,95 +1,24 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* style.css */
 
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000205; /* preto, não azul */
-  touch-action: none;
-  font-family: monospace;
+/* Define o fundo global da página como preto de noite */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #050508; /* Preto noite muito profundo */
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
 }
 
-canvas { display: block; width: 100%; height: 100%; }
-
-#hud {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  color: #00ffff;
-  text-shadow: 0 0 8px #00ffff, 0 0 16px #00ffff;
-  pointer-events: none;
-  user-select: none;
-  letter-spacing: 1px;
-  font-size: 14px;
-  line-height: 1.5;
+/* Exemplo de elemento Neon Cyan sobre o fundo escuro */
+.neon-box, .hero-section {
+    background-color: #0d0e15; /* Card escuro */
+    border: 1px solid #00f3ff; /* Bordas neon ciano */
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); /* Glow neon */
 }
 
-#dist { font-size: 16px; }
-#fps  { font-size: 12px; opacity: 0.7; }
-
-#crosshair {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  margin: -3px 0 0 -3px;
-  border-radius: 50%;
-  background: #00ffff;
-  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-  pointer-events: none;
-}
-
-#joystick {
-  position: fixed;
-  bottom: 30px;
-  left: 30px;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 255, 255, 0.6);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5),
-              inset 0 0 20px rgba(0, 255, 255, 0.2);
-  display: none;
-  touch-action: none;
-}
-
-#stick {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 55px;
-  height: 55px;
-  margin: -27.5px 0 0 -27.5px;
-  border-radius: 50%;
-  background: rgba(0, 255, 255, 0.4);
-  box-shadow: 0 0 20px #00ffff;
-}
-
-#jumpBtn {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 255, 255, 0.6);
-  background: rgba(0, 255, 255, 0.15);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5),
-              inset 0 0 20px rgba(0, 255, 255, 0.2);
-  display: none;
-  touch-action: none;
-  color: #00ffff;
-  font-size: 12px;
-  align-items: center;
-  justify-content: center;
-}
-
-body.mobile #joystick,
-body.mobile #jumpBtn {
-  display: flex;
-}
-
-body.mobile #crosshair {
-  display: none;
+/* Títulos ou destaques em neon */
+.neon-text {
+    color: #00f3ff;
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.8);
 }
