@@ -1,9 +1,9 @@
 // ================= CONFIG PADRÃO =================
 let CONFIG = {
-  bgColor: "#000205",
-  fogColor: "#000205",
+  bgColor: "#000000",
+  fogColor: "#000000",
   gridColor: "#00ffff",
-  gridSecondary: "#005577",
+  gridSecondary: "#003344",
   gridSize: 400,
   divisions: 400,
   moveSpeed: 8,
@@ -21,10 +21,26 @@ fetch('public/config.json')
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(cfg => { CONFIG = { ...CONFIG, ...cfg }; })
   .catch(() => {})
-  .finally(init);
+  .finally(() => {
+    if (document.getElementById('game-canvas-container')) {
+      init();
+    }
+    initDynamicYear();
+  });
+
+function initDynamicYear() {
+  const currentYear = new Date().getFullYear();
+  const yearEls = document.querySelectorAll('.dynamic-year');
+  yearEls.forEach(el => {
+    el.textContent = currentYear;
+  });
+}
 
 // ================= INIT =================
 function init() {
+  const container = document.getElementById('game-canvas-container');
+  if (!container) return;
+
   // ---------- CENA ----------
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(CONFIG.bgColor);
@@ -43,10 +59,9 @@ function init() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.maxPixelRatio));
   renderer.setSize(innerWidth, innerHeight);
   renderer.autoClear = true;
-  document.body.appendChild(renderer.domElement);
+  container.appendChild(renderer.domElement);
 
   // ---------- GRADE NEON ----------
-  // Grade fina: ciano escuro, sem lavar a tela
   const gridFine = new THREE.GridHelper(
     CONFIG.gridSize,
     Math.min(CONFIG.divisions, 200),
@@ -54,12 +69,11 @@ function init() {
     new THREE.Color(CONFIG.gridSecondary)
   );
   gridFine.material.transparent = true;
-  gridFine.material.opacity = 0.45;   // bem discreta
+  gridFine.material.opacity = 0.35;
   gridFine.material.depthWrite = false;
   gridFine.frustumCulled = false;
   scene.add(gridFine);
 
-  // Grade brilhante: linhas neon fortes a cada 10m
   const gridBright = new THREE.GridHelper(
     CONFIG.gridSize,
     40,
@@ -67,16 +81,15 @@ function init() {
     new THREE.Color(CONFIG.gridColor)
   );
   gridBright.material.transparent = true;
-  gridBright.material.opacity = 1.0;
+  gridBright.material.opacity = 0.9;
   gridBright.material.depthWrite = false;
   gridBright.position.y = 0.01;
   gridBright.frustumCulled = false;
   scene.add(gridBright);
 
   // ---------- LUZES ----------
-  // Ambiente MUITO baixa, só pra grade não ficar 100% preta
-  scene.add(new THREE.AmbientLight(0x081420, 0.6));
-  const dir = new THREE.DirectionalLight(new THREE.Color(CONFIG.gridColor), 0.25);
+  scene.add(new THREE.AmbientLight(0x020a10, 0.4));
+  const dir = new THREE.DirectionalLight(new THREE.Color(CONFIG.gridColor), 0.2);
   dir.position.set(1, 2, 1);
   scene.add(dir);
 
@@ -141,35 +154,39 @@ function init() {
     markDirty();
   }
 
-  joystick.addEventListener('touchstart', e => {
-    e.preventDefault();
-    const t = e.changedTouches[0];
-    joyId = t.identifier;
-    joyActive = true;
-    updateJoy(t);
-  }, { passive: false });
+  if (joystick) {
+    joystick.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      joyId = t.identifier;
+      joyActive = true;
+      updateJoy(t);
+    }, { passive: false });
 
-  joystick.addEventListener('touchmove', e => {
-    e.preventDefault();
-    for (const t of e.changedTouches) if (t.identifier === joyId) updateJoy(t);
-  }, { passive: false });
+    joystick.addEventListener('touchmove', e => {
+      e.preventDefault();
+      for (const t of e.changedTouches) if (t.identifier === joyId) updateJoy(t);
+    }, { passive: false });
 
-  const endJoy = e => {
-    e.preventDefault();
-    for (const t of e.changedTouches) {
-      if (t.identifier === joyId) {
-        joyActive = false; joyId = null;
-        joyVec = { x: 0, y: 0 };
-        stick.style.transform = 'translate(0,0)';
-        markDirty();
+    const endJoy = e => {
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (t.identifier === joyId) {
+          joyActive = false; joyId = null;
+          joyVec = { x: 0, y: 0 };
+          stick.style.transform = 'translate(0,0)';
+          markDirty();
+        }
       }
-    }
-  };
-  joystick.addEventListener('touchend', endJoy, { passive: false });
-  joystick.addEventListener('touchcancel', endJoy, { passive: false });
+    };
+    joystick.addEventListener('touchend', endJoy, { passive: false });
+    joystick.addEventListener('touchcancel', endJoy, { passive: false });
+  }
 
-  jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); jumpPressed = true; markDirty(); }, { passive: false });
-  jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpPressed = false; }, { passive: false });
+  if (jumpBtn) {
+    jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); jumpPressed = true; markDirty(); }, { passive: false });
+    jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpPressed = false; }, { passive: false });
+  }
 
   // ---- Look por toque ----
   let lookTouchId = null, lastLook = null;
@@ -225,7 +242,7 @@ function init() {
     const elapsed = now - lastFpsCheck;
     if (elapsed < 1000) return;
     displayFps = Math.round((fpsFrames * 1000) / elapsed);
-    fpsEl.textContent = `FPS: ${displayFps}`;
+    if (fpsEl) fpsEl.textContent = `FPS: ${displayFps}`;
     lastFpsCheck = now;
     fpsFrames = 0;
 
@@ -303,7 +320,7 @@ function init() {
     const dz = player.pos.z - startPos.y;
     const distMeters = Math.hypot(dx, dz);
     const newText = `DIST: ${formatDistance(distMeters)}`;
-    if (newText !== lastDistText) {
+    if (newText !== lastDistText && distEl) {
       lastDistText = newText;
       distEl.textContent = newText;
     }
