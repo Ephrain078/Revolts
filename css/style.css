@@ -1,109 +1,33 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
 html, body {
-    width: 100%; height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    background: #000;
-    color: #00ffff;
-    font-family: 'Courier New', monospace;
-    user-select: none; -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
+    background-color: #000000;
 }
 
-#game-container, #game-container canvas {
-    position: fixed; inset: 0;
-    touch-action: none;
-}
-#game-container canvas { display: block; cursor: crosshair; }
-
-#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-
-#crosshair {
-    position: absolute; top: 50%; left: 50%;
-    width: 20px; height: 20px;
-    transform: translate(-50%, -50%);
-    border: 1px solid rgba(0, 255, 255, 0.5);
-    border-radius: 50%;
-}
-#crosshair::before, #crosshair::after {
-    content: ''; position: absolute; background: #00ffff;
-}
-#crosshair::before { top: 50%; left: -4px; right: -4px; height: 1px; transform: translateY(-50%); }
-#crosshair::after  { left: 50%; top: -4px; bottom: -4px; width: 1px; transform: translateX(-50%); }
-
-#top-bar {
-    position: absolute; top: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 24px; pointer-events: auto;
-    font-size: 13px; letter-spacing: 2px;
-    flex-wrap: wrap; gap: 10px;
-}
-.logo { color: #ff00ff; font-weight: bold; text-shadow: 0 0 8px #ff00ff; }
-#top-bar nav a {
-    color: #00ffff; text-decoration: none; margin-left: 16px;
-    transition: color 0.2s, text-shadow 0.2s;
-}
-#top-bar nav a:hover { color: #ff00ff; text-shadow: 0 0 8px #ff00ff; }
-
-#stats-hud {
+#game-container {
     position: absolute;
-    top: 70px;
-    right: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-align: right;
-    pointer-events: none;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(0, 255, 255, 0.3);
-    padding: 10px 14px;
-    border-radius: 4px;
-    min-width: 130px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Fica por baixo da HUD */
 }
-#stats-hud .stat {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
+
+/* Garante que o canvas gerado pelo Three.js ocupe o container inteiro */
+#game-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10; /* Fica visível acima do canvas */
     color: #00ffff;
-    text-shadow: 0 0 6px rgba(0, 255, 255, 0.6);
-}
-#stats-hud .label {
-    color: #ff00ff;
-    font-weight: bold;
-    text-shadow: 0 0 6px rgba(255, 0, 255, 0.6);
-}
-#stats-hud .unit {
-    color: #ff00ff;
-    margin-left: 2px;
-}
-
-.hidden { display: none !important; }
-
-#mobile-ui { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
-
-#joystick-base {
-    position: absolute; left: 30px; bottom: 30px;
-    width: 120px; height: 120px; border-radius: 50%;
-    border: 2px solid rgba(0, 255, 255, 0.4);
-    background: rgba(0, 255, 255, 0.05);
-    pointer-events: auto; touch-action: none;
-}
-#joystick-knob {
-    position: absolute; top: 50%; left: 50%;
-    width: 50px; height: 50px; border-radius: 50%;
-    background: rgba(0, 255, 255, 0.3);
-    border: 2px solid #00ffff;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 12px #00ffff;
-}
-#jump-button {
-    position: absolute; right: 40px; bottom: 50px;
-    width: 80px; height: 80px; border-radius: 50%;
-    background: rgba(255, 0, 255, 0.15);
-    border: 2px solid #ff00ff; color: #ff00ff;
-    font-size: 24px; pointer-events: auto;
-    touch-action: none;
-    box-shadow: 0 0 16px rgba(255, 0, 255, 0.5);
+    font-family: monospace;
 }
