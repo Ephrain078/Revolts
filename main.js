@@ -1,19 +1,22 @@
-// ================= CONFIG =================
+// ================= CONFIG PADRÃO =================
 let CONFIG = {
+  bgColor: "#000814",
+  fogColor: "#001a2e",
+  gridColor: "#00ffff",
+  gridSecondary: "#0088aa",
   gridSize: 400,
   divisions: 400,
   moveSpeed: 8,
   gravity: 22,
   jumpForce: 9,
   playerHeight: 1.7,
-  fogNear: 40,
-  fogFar: 180,
-  bgColor: 0x00e5ff,
-  gridColor: 0x00ffff,
-  gridSecondary: 0x0088aa
+  fogNear: 30,
+  fogFar: 150,
+  maxPixelRatio: 1.5,
+  minPixelRatio: 0.5,
+  targetFPS: 60
 };
 
-// Carrega config externa (opcional)
 fetch('public/config.json')
   .then(r => r.ok ? r.json() : Promise.reject())
   .then(cfg => { CONFIG = { ...CONFIG, ...cfg }; })
@@ -22,35 +25,59 @@ fetch('public/config.json')
 
 // ================= INIT =================
 function init() {
+  // ---------- CENA ----------
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(CONFIG.bgColor);
-  scene.fog = new THREE.Fog(CONFIG.bgColor, CONFIG.fogNear, CONFIG.fogFar);
+  scene.fog = new THREE.Fog(new THREE.Color(CONFIG.fogColor), CONFIG.fogNear, CONFIG.fogFar);
 
-  const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
+
+  // ---------- RENDERER OTIMIZADO ----------
+  const renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    powerPreference: "high-performance",
+    alpha: false,
+    stencil: false,
+    depth: true
+  });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, CONFIG.maxPixelRatio));
   renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.autoClear = true;
   document.body.appendChild(renderer.domElement);
 
-  // ===== GRADE TRON =====
-  const grid = new THREE.GridHelper(CONFIG.gridSize, CONFIG.divisions, CONFIG.gridColor, CONFIG.gridSecondary);
-  grid.material.transparent = true;
-  grid.material.opacity = 0.9;
-  scene.add(grid);
+  // ---------- GRADE NEON ----------
+  const gridFine = new THREE.GridHelper(
+    CONFIG.gridSize,
+    Math.min(CONFIG.divisions, 200),
+    new THREE.Color(CONFIG.gridColor),
+    new THREE.Color(CONFIG.gridSecondary)
+  );
+  gridFine.material.transparent = true;
+  gridFine.material.opacity = 0.85;
+  gridFine.material.depthWrite = false;
+  gridFine.frustumCulled = false;
+  scene.add(gridFine);
 
-  const grid2 = new THREE.GridHelper(CONFIG.gridSize, 40, CONFIG.gridColor, CONFIG.gridColor);
-  grid2.material.transparent = true;
-  grid2.material.opacity = 0.7;
-  grid2.position.y = 0.01;
-  scene.add(grid2);
+  const gridBright = new THREE.GridHelper(
+    CONFIG.gridSize,
+    40,
+    new THREE.Color(CONFIG.gridColor),
+    new THREE.Color(CONFIG.gridColor)
+  );
+  gridBright.material.transparent = true;
+  gridBright.material.opacity = 0.7;
+  gridBright.material.depthWrite = false;
+  gridBright.position.y = 0.01;
+  gridBright.frustumCulled = false;
+  scene.add(gridBright);
 
-  // ===== LUZES =====
-  scene.add(new THREE.AmbientLight(CONFIG.bgColor, 1.2));
-  const dir = new THREE.DirectionalLight(CONFIG.gridColor, 0.8);
+  // ---------- LUZES ----------
+  scene.add(new THREE.AmbientLight(0x224466, 1.0));
+  const dir = new THREE.DirectionalLight(new THREE.Color(CONFIG.gridColor), 0.4);
   dir.position.set(1, 2, 1);
   scene.add(dir);
 
-  // ===== JOGADOR =====
+  // ---------- JOGADOR ----------
   const player = {
     pos: new THREE.Vector3(0, CONFIG.playerHeight, 0),
     velocity: new THREE.Vector3(),
@@ -59,9 +86,10 @@ function init() {
     pitch: 0
   };
 
-  // ===== CONTROLES =====
+  // ================= CONTROLES =================
   const keys = {};
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || ('ontouchstart' in window);
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    || ('ontouchstart' in window);
   if (isMobile) document.body.classList.add('mobile');
 
   addEventListener('keydown', e => {
@@ -70,7 +98,7 @@ function init() {
   });
   addEventListener('keyup', e => keys[e.code] = false);
 
-  // Mouse look
+  // ---- Mouse look ----
   let mouseLocked = false;
   const canvas = renderer.domElement;
 
@@ -85,9 +113,10 @@ function init() {
     player.yaw -= e.movementX * 0.0022;
     player.pitch -= e.movementY * 0.0022;
     player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
+    markDirty();
   });
 
-  // ===== JOYSTICK MOBILE =====
+  // ---- Joystick mobile ----
   const joystick = document.getElementById('joystick');
   const stick = document.getElementById('stick');
   const jumpBtn = document.getElementById('jumpBtn');
@@ -99,14 +128,14 @@ function init() {
     const rect = joystick.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    let dx = t.clientX - cx;
-    let dy = t.clientY - cy;
+    let dx = t.clientX - cx, dy = t.clientY - cy;
     const maxR = rect.width / 2 - 10;
     const d = Math.hypot(dx, dy);
     if (d > maxR) { dx = dx / d * maxR; dy = dy / d * maxR; }
     stick.style.transform = `translate(${dx}px, ${dy}px)`;
     joyVec.x = dx / maxR;
     joyVec.y = dy / maxR;
+    markDirty();
   }
 
   joystick.addEventListener('touchstart', e => {
@@ -129,16 +158,17 @@ function init() {
         joyActive = false; joyId = null;
         joyVec = { x: 0, y: 0 };
         stick.style.transform = 'translate(0,0)';
+        markDirty();
       }
     }
   };
   joystick.addEventListener('touchend', endJoy, { passive: false });
   joystick.addEventListener('touchcancel', endJoy, { passive: false });
 
-  jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); jumpPressed = true; }, { passive: false });
+  jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); jumpPressed = true; markDirty(); }, { passive: false });
   jumpBtn.addEventListener('touchend', e => { e.preventDefault(); jumpPressed = false; }, { passive: false });
 
-  // Look mobile (arrastar no lado direito)
+  // ---- Look por toque ----
   let lookTouchId = null, lastLook = null;
   canvas.addEventListener('touchstart', e => {
     if (!isMobile) return;
@@ -160,6 +190,7 @@ function init() {
         player.pitch -= dy * 0.005;
         player.pitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, player.pitch));
         lastLook = { x: t.clientX, y: t.clientY };
+        markDirty();
       }
     }
   }, { passive: false });
@@ -170,17 +201,59 @@ function init() {
     }
   }, { passive: false });
 
-  // ===== HUD =====
-  const hud = document.getElementById('hud');
+  // ================= HUD =================
+  const distEl = document.getElementById('dist');
+  const fpsEl  = document.getElementById('fps');
   const startPos = new THREE.Vector2(0, 0);
-  let distance = 0;
+  let lastDistText = '';
 
-  // ===== LOOP =====
+  // Formata a distância em metros (até 999m) ou km (a partir de 1000m)
+  function formatDistance(meters) {
+    if (meters < 1000) {
+      return `${Math.floor(meters)} m`;
+    }
+    return `${(meters / 1000).toFixed(2)} km`;
+  }
+
+  // ================= ADAPTIVE RENDER =================
+  let currentPixelRatio = Math.min(devicePixelRatio, CONFIG.maxPixelRatio);
+  let fpsFrames = 0, lastFpsCheck = performance.now();
+  let displayFps = 0;
+  const LOW_FPS = 40, HIGH_FPS = 58;
+
+  function adjustQuality(now) {
+    const elapsed = now - lastFpsCheck;
+    if (elapsed < 1000) return;
+    displayFps = Math.round((fpsFrames * 1000) / elapsed);
+    fpsEl.textContent = `FPS: ${displayFps}`;
+    lastFpsCheck = now;
+    fpsFrames = 0;
+
+    let pr = currentPixelRatio;
+    if (displayFps < LOW_FPS && pr > CONFIG.minPixelRatio) {
+      pr = Math.max(CONFIG.minPixelRatio, pr - 0.15);
+    } else if (displayFps > HIGH_FPS && pr < CONFIG.maxPixelRatio) {
+      pr = Math.min(CONFIG.maxPixelRatio, pr + 0.1);
+    }
+    if (pr !== currentPixelRatio) {
+      currentPixelRatio = pr;
+      renderer.setPixelRatio(pr);
+      renderer.setSize(innerWidth, innerHeight, false);
+    }
+  }
+
+  // ================= LOOP ADAPTATIVO =================
   const clock = new THREE.Clock();
   const forward = new THREE.Vector3();
   const right = new THREE.Vector3();
   const move = new THREE.Vector3();
   const lookDir = new THREE.Vector3();
+
+  let dirty = true;
+  let lastFrameTime = performance.now();
+  const IDLE_RENDER_INTERVAL = 100;
+
+  function markDirty() { dirty = true; }
 
   function update(dt) {
     forward.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
@@ -191,40 +264,50 @@ function init() {
     if (keys['KeyS'] || keys['ArrowDown'])  mz -= 1;
     if (keys['KeyD'] || keys['ArrowRight']) mx += 1;
     if (keys['KeyA'] || keys['ArrowLeft'])  mx -= 1;
-
     if (joyActive) { mx += joyVec.x; mz -= joyVec.y; }
 
     const len = Math.hypot(mx, mz);
     if (len > 1) { mx /= len; mz /= len; }
 
-    move.set(0, 0, 0);
-    move.addScaledVector(forward, mz);
-    move.addScaledVector(right, mx);
-    move.multiplyScalar(CONFIG.moveSpeed * dt);
-
-    player.pos.x += move.x;
-    player.pos.z += move.z;
-
+    const moving = mx !== 0 || mz !== 0;
     const wantJump = keys['Space'] || jumpPressed;
+
+    move.set(0, 0, 0);
+    if (moving) {
+      move.addScaledVector(forward, mz);
+      move.addScaledVector(right, mx);
+      move.multiplyScalar(CONFIG.moveSpeed * dt);
+      player.pos.x += move.x;
+      player.pos.z += move.z;
+      markDirty();
+    }
+
     if (wantJump && player.onGround) {
       player.velocity.y = CONFIG.jumpForce;
       player.onGround = false;
+      markDirty();
     }
 
-    player.velocity.y -= CONFIG.gravity * dt;
-    player.pos.y += player.velocity.y * dt;
-
-    if (player.pos.y <= CONFIG.playerHeight) {
-      player.pos.y = CONFIG.playerHeight;
-      player.velocity.y = 0;
-      player.onGround = true;
+    if (!player.onGround) {
+      player.velocity.y -= CONFIG.gravity * dt;
+      player.pos.y += player.velocity.y * dt;
+      if (player.pos.y <= CONFIG.playerHeight) {
+        player.pos.y = CONFIG.playerHeight;
+        player.velocity.y = 0;
+        player.onGround = true;
+      }
+      markDirty();
     }
 
-    // Distância percorrida
+    // HUD distância (m ou km)
     const dx = player.pos.x - startPos.x;
     const dz = player.pos.z - startPos.y;
-    distance = Math.hypot(dx, dz);
-    hud.textContent = `DIST: ${Math.floor(distance)} m`;
+    const distMeters = Math.hypot(dx, dz);
+    const newText = `DIST: ${formatDistance(distMeters)}`;
+    if (newText !== lastDistText) {
+      lastDistText = newText;
+      distEl.textContent = newText;
+    }
 
     // Câmera
     camera.position.copy(player.pos);
@@ -239,25 +322,59 @@ function init() {
       player.pos.z + lookDir.z
     );
 
-    // Grade segue jogador
-    grid.position.x = Math.round(player.pos.x / 10) * 10;
-    grid.position.z = Math.round(player.pos.z / 10) * 10;
-    grid2.position.x = grid.position.x;
-    grid2.position.z = grid.position.z;
+    // Grade
+    const gx = Math.round(player.pos.x / 10) * 10;
+    const gz = Math.round(player.pos.z / 10) * 10;
+    if (gridFine.position.x !== gx || gridFine.position.z !== gz) {
+      gridFine.position.x = gx;
+      gridFine.position.z = gz;
+      gridBright.position.x = gx;
+      gridBright.position.z = gz;
+      markDirty();
+    }
+
+    return moving || !player.onGround || dirty;
   }
 
-  function animate() {
-    requestAnimationFrame(animate);
+  function loop(now) {
+    requestAnimationFrame(loop);
+
+    if (!dirty && now - lastFrameTime < IDLE_RENDER_INTERVAL) return;
+
     const dt = Math.min(clock.getDelta(), 0.05);
-    update(dt);
-    renderer.render(scene, camera);
-  }
-  animate();
+    const shouldRender = update(dt);
 
-  // ===== RESIZE =====
+    if (shouldRender || dirty) {
+      renderer.render(scene, camera);
+      dirty = false;
+    }
+
+    fpsFrames++;
+    lastFrameTime = now;
+    adjustQuality(now);
+  }
+
+  requestAnimationFrame(loop);
+
+  // ================= RESIZE =================
+  let resizeTimeout = null;
   addEventListener('resize', () => {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
+    if (resizeTimeout) clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+      markDirty();
+    }, 100);
+  });
+
+  // ================= VISIBILITY =================
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      renderer.setAnimationLoop(null);
+    } else {
+      clock.getDelta();
+      markDirty();
+    }
   });
 }
