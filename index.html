@@ -200,4 +200,430 @@ html[data-theme="light"] .btn-filled{ color: #fff; }
   font-family: monospace; font-size: 14px; text-align: center; letter-spacing: .05em; color: var(--on-surface);
 }
 .crowdsource-input{
-  width: 100%; padding: 13px 16px; border
+  width: 100%; padding: 13px 16px; border-radius: var(--r-sm); border: 1px solid var(--outline);
+  background: var(--surface); color: var(--on-surface); font-family: inherit; font-size: 14px; outline: none;
+}
+.crowdsource-input:focus{ border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container); }
+
+.rank-list{ display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--r-lg); }
+.rank-row{
+  display: grid; grid-template-columns: 34px 44px 1fr auto; align-items: center; gap: 14px;
+  padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); border: 1px solid transparent;
+}
+.rank-row.self{ border-color: var(--primary); background: var(--primary-container); }
+.rank-pos{ font-size: 15px; font-weight: 900; color: var(--on-surface-variant); text-align: center; }
+.rank-avatar{
+  width: 44px; height: 44px; border-radius: var(--r-full); display: grid; place-items: center;
+  font-size: 14px; font-weight: 800; color: var(--on-primary); background: linear-gradient(135deg, var(--primary), var(--tertiary));
+}
+.rank-info{ min-width: 0; }
+.rank-name{ display: block; font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-meta{ font-size: 11.5px; color: var(--on-surface-variant); }
+.rank-xp{ font-size: 14px; font-weight: 900; color: var(--primary); }
+
+.overlay{
+  position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(28,27,31,.55); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.overlay.open{ opacity: 1; pointer-events: auto; }
+.dialog{
+  position: relative; width: 100%; max-width: 430px; padding: 30px 26px 26px; border-radius: var(--r-xl);
+  background: var(--surface-solid); border: 1px solid var(--outline); box-shadow: var(--shadow);
+}
+.dialog-close{
+  position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: var(--r-full);
+  border: none; background: var(--surface); color: var(--on-surface-variant); display: grid; place-items: center; cursor: pointer;
+}
+
+#toast{
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 140%); z-index: 300;
+  display: flex; align-items: center; gap: 10px; padding: 13px 22px; border-radius: var(--r-full);
+  background: var(--surface-solid); border: 1px solid var(--primary); color: var(--on-surface);
+  font-size: 13.5px; font-weight: 600; box-shadow: var(--shadow); transition: transform .45s var(--ease), opacity .45s; opacity: 0; pointer-events: none;
+}
+#toast.show{ transform: translate(-50%, 0); opacity: 1; }
+
+@media (max-width: 820px){
+  .rail{ inset: auto 0 0 0; width: 100%; height: 70px; flex-direction: row; justify-content: space-around; border-right: none; border-top: 1px solid var(--outline); }
+  .rail-logo, .rail-spacer, .rail-sync{ display: none; }
+  .rail-item{ width: 84px; height: 56px; }
+  .content{ margin-left: 0; width: 100%; }
+  .content-inner{ padding-bottom: 110px; }
+  #toast{ bottom: 92px; }
+  .hero{ justify-content: center; text-align: center; }
+  .hero-info{ text-align: center; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <aside class="rail" role="navigation">
+    <div class="rail-logo">R</div>
+    <button class="rail-item active" data-view="dashboard">
+      <span class="material-symbols-rounded">space_dashboard</span><span>Base</span>
+    </button>
+    <button class="rail-item" data-view="missions">
+      <span class="material-symbols-rounded">flag</span><span>Missões</span>
+    </button>
+    <button class="rail-item" data-view="ranking">
+      <span class="material-symbols-rounded">leaderboard</span><span>Ranking</span>
+    </button>
+    <div class="rail-spacer"></div>
+    <div class="rail-sync">
+      <span class="sync-dot online" id="railSyncDot"></span>
+      <span id="railSyncText">API IA</span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h2 class="topbar-title">REVOLTS <b>CROWDSOURCE AI</b></h2>
+          <span class="sync-pill">
+            <span class="material-symbols-rounded">hub</span>
+            <span id="syncLabel">Motor IA Ativo</span>
+          </span>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn" id="themeBtn" title="Alternar Tema"><span class="material-symbols-rounded" id="themeIcon">light_mode</span></button>
+          <button class="icon-btn" id="authBtn" title="Perfil"><span class="material-symbols-rounded" id="authBtnIcon">account_circle</span></button>
+        </div>
+      </header>
+
+      <!-- VIEW: DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div class="view-head">
+          <h1>Olá, <span class="accent" id="userName">Agente</span>.</h1>
+          <p class="muted">Valide dados de IA humano-no-loop inspirados no Google Crowdsource e suba de nível na rede.</p>
+        </div>
+
+        <div class="card hero">
+          <div class="ring-wrap">
+            <svg class="ring" viewBox="0 0 100 100">
+              <defs>
+                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="var(--primary)" />
+                  <stop offset="100%" stop-color="var(--tertiary)" />
+                </linearGradient>
+              </defs>
+              <circle class="ring-track" cx="50" cy="50" r="42" />
+              <circle class="ring-progress" id="ringProgress" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264" />
+            </svg>
+            <div class="ring-center">
+              <span class="ring-level" id="userLevel">1</span>
+              <span class="ring-label">Nível</span>
+            </div>
+          </div>
+          <div class="hero-info">
+            <div class="hero-xp">
+              <span id="userXp">0</span>
+              <span>XP NEURAL</span>
+            </div>
+            <p class="muted">Complete lotes de validação de escrita, imagens e traduções para treinar os modelos da rede.</p>
+            <div class="xp-bar"><i id="xpBarFill"></i></div>
+            <div class="hero-chips">
+              <span class="chip" id="chipCompleted">0 Validações</span>
+              <span class="chip chip-secondary" id="chipStreak">Streak 1x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="card stat">
+            <div class="stat-icon"><span class="material-symbols-rounded">draw</span></div>
+            <div class="stat-value" id="statHandwriting">0</div>
+            <div class="stat-label">Escrita Manual</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-icon"><span class="material-symbols-rounded">translate</span></div>
+            <div class="stat-value" id="statTranslation">0</div>
+            <div class="stat-label">Traduções</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-icon"><span class="material-symbols-rounded">image_search</span></div>
+            <div class="stat-value" id="statVision">0</div>
+            <div class="stat-label">Imagens IA</div>
+          </div>
+          <div class="card stat">
+            <div class="stat-icon"><span class="material-symbols-rounded">psychology</span></div>
+            <div class="stat-value" id="statSentiment">0</div>
+            <div class="stat-label">Sentimentos</div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO DO EMBED DO CANVA CORRIGIDA E OTIMIZADA -->
+        <div class="section-title">
+          <h2>Apresentação Oficial & Material</h2>
+        </div>
+        <div class="card" style="padding: 16px;">
+          <div style="position: relative; width: 100%; height: 0; padding-top: 56.25%; padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); overflow: hidden; border-radius: 12px;">
+            <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0; margin: 0;"
+              src="https://www.canva.com/design/DAHbJQuyoYU/wHJkC8eP0sLMKEQgzUlT_w/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
+            </iframe>
+          </div>
+          <div style="margin-top: 12px; font-size: 13px; text-align: center;">
+            <a href="https://www.canva.com/design/DAHbJQuyoYU/wHJkC8eP0sLMKEQgzUlT_w/view?utm_content=DAHbJQuyoYU&utm_campaign=designshare&utm_medium=embeds&utm_source=link" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: none; font-weight: 600;">Site Revolts estilo Google Crowdsource</a> de Gabriel Marco
+          </div>
+        </div>
+
+        <div class="section-title">
+          <h2>Missões Crowdsource em Destaque</h2>
+          <button class="link" onclick="switchView('missions')">Ver todas <span class="material-symbols-rounded">arrow_forward</span></button>
+        </div>
+        <div class="missions-grid" id="homeMissionsGrid"></div>
+      </section>
+
+      <!-- VIEW: MISSÕES -->
+      <section class="view" id="view-missions">
+        <div class="view-head">
+          <h1>Central de <span class="accent">Missões IA</span></h1>
+          <p class="muted">Interaja diretamente com o algoritmo de validação e rotulagem neural.</p>
+        </div>
+        <div class="missions-grid" id="fullMissionsGrid"></div>
+      </section>
+
+      <!-- VIEW: RANKING -->
+      <section class="view" id="view-ranking">
+        <div class="view-head">
+          <h1>Placar <span class="accent">Global</span></h1>
+          <p class="muted">Agentes com maior contribuição de dados para o ecossistema Revolts.</p>
+        </div>
+        <div class="card rank-list" id="rankContainer"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL DA API INTERATIVA -->
+<div class="overlay" id="missionOverlay">
+  <div class="dialog">
+    <button class="dialog-close" onclick="closeMissionModal()"><span class="material-symbols-rounded">close</span></button>
+    <div class="dialog-head">
+      <div class="brand-mark" style="width:56px;height:56px;margin:0 auto 14px;border-radius:var(--r-md);display:grid;place-items:center;font-size:26px;color:var(--on-primary);background:linear-gradient(135deg,var(--primary),var(--tertiary));"><span class="material-symbols-rounded" id="modalIcon">psychology</span></div>
+      <h2 id="modalTitle" style="margin:0 0 6px;font-size:21px;font-weight:800;">Missão Neural</h2>
+      <p class="muted" id="modalDesc">Valide os dados para treinar o modelo de IA.</p>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span class="material-symbols-rounded">verified</span>
+  <span id="toastMsg">Dados validados com sucesso!</span>
+</div>
+
+<script>
+let state = JSON.parse(localStorage.getItem('revolts_crowdsource_state')) || {
+  name: "Agente_" + Math.random().toString(36).substring(2, 6),
+  xp: 140,
+  completed: 4,
+  streak: 2,
+  stats: { handwriting: 1, translation: 1, vision: 1, sentiment: 1 },
+  theme: document.documentElement.getAttribute('data-theme') || 'dark'
+};
+
+const missionsData = [
+  {
+    id: 'm1', type: 'handwriting', title: 'Reconhecimento de Escrita Manual',
+    desc: 'Decifre palavras manuscritas em formulários antigos para treinar o OCR neural.',
+    xp: 60, icon: 'draw', promptText: 'Analise o texto manuscrito borrado na imagem abaixo:', sample: '[amostra #4928: "Tecnologia_Sustentável"]'
+  },
+  {
+    id: 'm2', type: 'translation', title: 'Tradução de Expressões Regionais',
+    desc: 'Traduza gírias e expressões regionais do Português (BR) para o Inglês técnico.',
+    xp: 50, icon: 'translate', promptText: 'Traduza com precisão contextual a frase:', sample: '"O sistema caiu bem no meio do pico de acesso."'
+  },
+  {
+    id: 'm3', type: 'vision', title: 'Reconhecimento de Imagem e Objetos',
+    desc: 'Identifique sinalizações de trânsito e obstáculos urbanos em capturas de rua.',
+    xp: 75, icon: 'image_search', promptText: 'Selecione a categoria correta para o objeto destacado:', sample: '[Objeto: Placa de Limite de Velocidade 60km/h]'
+  },
+  {
+    id: 'm4', type: 'sentiment', title: 'Análise de Sentimento PT-BR',
+    desc: 'Classifique avaliações de aplicativos entre Neutro, Positivo ou Crítico.',
+    xp: 40, icon: 'psychology', promptText: 'Qual o sentimento predominante na avaliação?', sample: '"O app é rápido, mas trava ao abrir o perfil."'
+  }
+];
+
+let rankingData = [
+  { name: 'V. Kessler', xp: 9420, level: 63, avatar: 'VK' },
+  { name: 'Nyx_07', xp: 7310, level: 49, avatar: 'N' },
+  { name: 'GhostByte', xp: 5680, level: 38, avatar: 'G' },
+  { name: state.name, xp: state.xp, level: Math.floor(state.xp/150)+1, avatar: state.name.substring(0,2).toUpperCase(), self: true },
+  { name: 'Aria-9', xp: 4120, level: 28, avatar: 'A' },
+  { name: 'K4IRO', xp: 2870, level: 20, avatar: 'K' }
+];
+
+function saveState(){
+  localStorage.setItem('revolts_crowdsource_state', JSON.stringify(state));
+  const selfIdx = rankingData.findIndex(r => r.self);
+  if(selfIdx !== -1){
+    rankingData[selfIdx].xp = state.xp;
+    rankingData[selfIdx].level = Math.floor(state.xp/150)+1;
+    rankingData[selfIdx].name = state.name;
+  }
+  rankingData.sort((a,b) => b.xp - a.xp);
+}
+
+function renderAll(){
+  const level = Math.floor(state.xp / 150) + 1;
+  const xpInLevel = state.xp % 150;
+  const circumference = 264;
+  
+  document.getElementById('userLevel').textContent = level;
+  document.getElementById('userXp').textContent = state.xp;
+  document.getElementById('userName').textContent = state.name;
+  document.getElementById('chipCompleted').textContent = state.completed + ' Validações';
+  document.getElementById('chipStreak').textContent = 'Streak ' + state.streak + 'x';
+  document.getElementById('ringProgress').style.strokeDashoffset = circumference - (circumference * (xpInLevel / 150));
+  document.getElementById('xpBarFill').style.width = Math.round((xpInLevel / 150) * 100) + '%';
+
+  document.getElementById('statHandwriting').textContent = state.stats.handwriting;
+  document.getElementById('statTranslation').textContent = state.stats.translation;
+  document.getElementById('statVision').textContent = state.stats.vision;
+  document.getElementById('statSentiment').textContent = state.stats.sentiment;
+
+  renderMissionsGrids();
+  renderRanking();
+}
+
+function renderMissionsGrids(){
+  const html = missionsData.map(m => `
+    <div class="card mission-card">
+      <div class="mission-top">
+        <div class="mission-icon"><span class="material-symbols-rounded">${m.icon}</span></div>
+        <span class="xp-badge">+${m.xp} XP</span>
+      </div>
+      <h3>${m.title}</h3>
+      <p class="muted">${m.desc}</p>
+      <div class="mission-foot">
+        <span class="chip chip-outline">Crowdsource AI</span>
+        <button class="btn btn-filled" onclick="openMissionModal('${m.id}')">Executar Missão</button>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('homeMissionsGrid').innerHTML = html;
+  document.getElementById('fullMissionsGrid').innerHTML = html;
+}
+
+function renderRanking(){
+  const container = document.getElementById('rankContainer');
+  container.innerHTML = rankingData.map((r, i) => `
+    <div class="rank-row ${r.self ? 'self' : ''}">
+      <div class="rank-pos">#${i+1}</div>
+      <div class="rank-avatar">${r.avatar}</div>
+      <div class="rank-info">
+        <span class="rank-name">${r.name} ${r.self ? '(Você)' : ''}</span>
+        <span class="rank-meta">Nível ${r.level} • validador neural</span>
+      </div>
+      <div class="rank-xp">${r.xp} XP</div>
+    </div>
+  `).join('');
+}
+
+let currentMissionId = null;
+
+function openMissionModal(id){
+  currentMissionId = id;
+  const m = missionsData.find(item => item.id === id);
+  if(!m) return;
+
+  document.getElementById('modalIcon').textContent = m.icon;
+  document.getElementById('modalTitle').textContent = m.title;
+  document.getElementById('modalDesc').textContent = m.desc;
+
+  let interactiveHTML = `
+    <div class="crowdsource-box">
+      <h4><span class="material-symbols-rounded">terminal</span> Validação Humana Obrigatória</h4>
+      <div class="crowdsource-preview">${m.promptText}<br><br><b>${m.sample}</b></div>
+  `;
+
+  if(m.type === 'handwriting' || m.type === 'translation'){
+    interactiveHTML += `
+      <input type="text" id="apiInputVal" class="crowdsource-input" placeholder="Digite a resposta exata para testar o modelo..." autocomplete="off" />
+      <button class="btn btn-filled full" style="margin-top:8px;" onclick="validateAndSubmit('${m.id}')">Submeter Resposta à API</button>
+    `;
+  } else {
+    let options = m.type === 'vision' ? ['Placa de Trânsito', 'Semáforo', 'Faixa de Pedestre', 'Outro'] : ['Positivo', 'Neutro', 'Crítico'];
+    interactiveHTML += `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">`;
+    options.forEach(opt => {
+      interactiveHTML += `<button class="btn btn-tonal" style="flex:1; min-width:120px;" onclick="validateAndSubmit('${m.id}', '${opt}')">${opt}</button>`;
+    });
+    interactiveHTML += `</div>`;
+  }
+
+  interactiveHTML += `</div>`;
+  document.getElementById('modalBody').innerHTML = interactiveHTML;
+  document.getElementById('missionOverlay').classList.add('open');
+}
+
+function closeMissionModal(){
+  document.getElementById('missionOverlay').classList.remove('open');
+  currentMissionId = null;
+}
+
+function validateAndSubmit(id, choice){
+  const m = missionsData.find(item => item.id === id);
+  const inputEl = document.getElementById('apiInputVal');
+  const userText = choice || (inputEl ? inputEl.value.trim() : '');
+
+  if(!userText){
+    showToast('⚠️ Preencha o campo de texto antes de enviar.');
+    return;
+  }
+
+  state.xp += m.xp;
+  state.completed += 1;
+  state.streak += 1;
+  if(m.type === 'handwriting') state.stats.handwriting++;
+  if(m.type === 'translation') state.stats.translation++;
+  if(m.type === 'vision') state.stats.vision++;
+  if(m.type === 'sentiment') state.stats.sentiment++;
+
+  saveState();
+  renderAll();
+  closeMissionModal();
+  showToast(`Sucesso! Resposta validada pelo algoritmo. +${m.xp} XP`);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function switchView(viewId){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.rail-item').forEach(b => b.classList.remove('active'));
+  
+  document.getElementById('view-' + viewId).classList.add('active');
+  const btn = document.querySelector(`.rail-item[data-view="${viewId}"]`);
+  if(btn) btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.rail-item').forEach(btn => {
+  btn.addEventListener('click', () => switchView(btn.getAttribute('data-view')));
+});
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('revolts_theme', next);
+  document.getElementById('themeIcon').textContent = next === 'dark' ? 'light_mode' : 'dark_mode';
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+});
+</script>
+</body>
+</html>
