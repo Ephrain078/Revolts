@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<title>Revolts — Ranking Global</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-bar">
+    <a class="brand" href="index.html"><span class="brand__name">Revolts — Ranking</span></a>
+  </header>
+  <nav class="nav-rail">
+    <a href="index.html" class="rail-item">🏠 Início</a>
+    <a href="missions.html" class="rail-item">🎯 Missões</a>
+    <a href="rank.html" class="rail-item is-active">🏆 Ranking</a>
+    <a href="profile.html" class="rail-item">⚙️ Perfil</a>
+  </nav>
+  <main class="content">
+    <div class="section-head"><h2>Placar Global de Agentes</h2></div>
+    <div class="mission-grid" id="globalRankList">Carregando placar da nuvem...</div>
+  </main>
+</div>
+
+<script type="module" src="auth.js"></script>
+<script type="module">
+  window.onAuthReady = () => {
+    window.listenRank((players) => {
+      const container = document.getElementById('globalRankList');
+      container.innerHTML = players.map((p, i) => `
+        <div class="mission" style="--accent:${p.accent}">
+          <div class="mission__top"><span class="mission__points">#${i + 1} — ${p.xp} XP</span></div>
+          <h3 class="mission__title">${p.name}</h3>
+          <p class="mission__desc">Nível ${Math.floor(p.xp / 150) + 1} na Rede</p>
+        </div>
+      `).join('');
+    });
+  };
+</script>
+</body>
+</html>
