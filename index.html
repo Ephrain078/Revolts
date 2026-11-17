@@ -3,87 +3,248 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Revolts — Início</title>
-<link rel="stylesheet" href="style.css"> <!-- Se preferir separar o CSS também -->
-</head>
-<body>
-<div class="app">
-  <!-- Barra Superior -->
-  <header class="app-bar">
-    <a class="brand" href="index.html">
-      <span class="brand__mark"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 2 2 13h4v9h5v-6h2v6h5v-9h4L12 2Z"/></svg></span>
-      <span class="brand__name">Revolts</span>
-    </a>
-    <div class="app-bar__spacer"></div>
-    <button class="icon-btn" id="themeToggle">🌓</button>
-    <button class="auth-pill" onclick="location.href='profile.html'">
-      <span class="auth-pill__avatar" id="headerAvatar">?</span>
-      <span id="headerUserName">Entrar</span>
-    </button>
-  </header>
+<meta name="theme-color" content="#0a0e14" />
+<title>Revolts — Portal de Missões</title>
 
-  <!-- Menu Lateral (Navegação entre páginas HTML) -->
-  <nav class="nav-rail">
-    <a href="index.html" class="rail-item is-active"><span class="rail-item__pill">🏠</span>Início</a>
-    <a href="missions.html" class="rail-item"><span class="rail-item__pill">🎯</span>Missões</a>
-    <a href="rank.html" class="rail-item"><span class="rail-item__pill">🏆</span>Ranking</a>
-    <a href="profile.html" class="rail-item"><span class="rail-item__pill">⚙️</span>Perfil</a>
-  </nav>
-
-  <!-- Conteúdo Principal -->
-  <main class="content">
-    <div class="hero">
-      <div>
-        <span style="font-size:.74rem; font-weight:600; color:var(--primary); text-transform:uppercase;">Arquitetura Multi-Página</span>
-        <h1>Bem-vindo ao <em>Revolts</em></h1>
-        <p>Sistema modular conectado ao Firebase. Acompanhe seu progresso e suba de nível.</p>
-        <div class="hero__stats">
-          <div class="stat-chip">⭐ XP: <strong id="statXp">0</strong></div>
-          <div class="stat-chip">✅ Missões: <strong id="statMissions">0</strong></div>
-        </div>
-      </div>
-      <div class="level-ring">
-        <svg viewBox="0 0 100 100" width="140" height="140"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface-3)" stroke-width="10"/><circle id="levelRingBar" cx="50" cy="50" r="42" fill="none" stroke="url(#ringGrad)" stroke-width="10" stroke-dasharray="264" stroke-dashoffset="264"/></svg>
-        <div class="level-ring__label"><b id="levelNumber">1</b><span>Nível</span></div>
-      </div>
-    </div>
-
-    <div class="section-head"><h2>Missões em Destaque</h2></div>
-    <div class="mission-grid" id="homeMissionGrid"></div>
-  </main>
-</div>
-
-<!-- Importa o script centralizado de nuvem -->
-<script type="module" src="auth.js"></script>
+<!-- Firebase SDK v10 (Firestore + Auth) -->
 <script type="module">
-  window.refreshView = function() {
-    const state = window.revoltsState;
-    document.getElementById('statXp').textContent = state.xp;
-    document.getElementById('statMissions').textContent = state.completed;
-    const level = Math.floor(state.xp / 150) + 1;
-    document.getElementById('levelNumber').textContent = level;
-    
-    const grid = document.getElementById('homeMissionGrid');
-    grid.innerHTML = state.missions.slice(0, 2).map(m => `
-      <div class="mission" onclick="completeMission('${m.id}')" style="--accent:var(--g-blue)">
-        <div class="mission__top"><span class="mission__points">+${m.xp} XP</span></div>
-        <h3 class="mission__title">${m.title}</h3>
-        <p class="mission__desc">${m.desc}</p>
-      </div>
-    `).join('');
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY_AQUI", // Insira sua apiKey real aqui
+    authDomain: "revolts-b8c77.firebaseapp.com",
+    projectId: "revolts-b8c77",
+    storageBucket: "revolts-b8c77.appspot.com",
+    messagingSenderId: "554456699154",
+    appId: "1:554456699154:web:f379970293c67b0fbf23cb"
   };
 
-  window.completeMission = function(id) {
-    const m = window.revoltsState.missions.find(item => item.id === id);
-    if (!m) return;
-    m.done++;
-    window.revoltsState.xp += m.xp;
-    window.revoltsState.completed++;
-    window.saveCloudDB();
-    alert(`Missão concluída! +${m.xp} XP`);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  let guestId = localStorage.getItem('revolts_guest_id');
+  if (!guestId) {
+    guestId = 'visitante_' + Math.random().toString(36).substring(2, 8);
+    localStorage.setItem('revolts_guest_id', guestId);
+  }
+
+  let currentDocId = guestId;
+  window.currentUser = null;
+
+  const DEFAULT_MISSIONS = [
+    { id: 'm1', cat: 'vision', title: 'Rotulagem de Objetos Urbanos', desc: 'Identifique semáforos, faixas e placas em capturas de rua.', xp: 50, done: 2, total: 5, accent: 'var(--g-blue)' },
+    { id: 'm2', cat: 'nlp', title: 'Análise de Sentimento PT-BR', desc: 'Classifique expressões regionais e gírias brasileiras.', xp: 40, done: 4, total: 5, accent: 'var(--g-green)' },
+    { id: 'm3', cat: 'maps', title: 'Verificação de Acessibilidade', desc: 'Confirme rampas e entradas acessíveis em locais públicos.', xp: 75, done: 1, total: 4, accent: 'var(--g-yellow)' },
+    { id: 'm4', cat: 'vision', title: 'Transcrição OCR Manuscrita', desc: 'Valide palavras digitalizadas de documentos históricos.', xp: 60, done: 0, total: 5, accent: 'var(--g-red)' }
+  ];
+
+  window.revoltsState = {
+    displayName: 'Agente Visitante',
+    xp: 120,
+    completed: 7,
+    streak: 3,
+    theme: 'dark',
+    missions: DEFAULT_MISSIONS
   };
 
-  window.onAuthReady = () => window.refreshView();
+  onAuthStateChanged(auth, async (user) => {
+    window.currentUser = user;
+    if (user) {
+      currentDocId = user.uid;
+      const name = user.displayName || user.email.split('@')[0];
+      updateAuthUI(true, name, user.photoURL);
+      await loadUserData(currentDocId, name);
+    } else {
+      currentDocId = guestId;
+      updateAuthUI(false, 'Visitante', null);
+      await loadUserData(currentDocId, 'Agente Visitante');
+    }
+    listenToGlobalRank();
+  });
+
+  async function loadUserData(docId, fallbackName) {
+    try {
+      const docRef = doc(db, "agents", docId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        window.revoltsState = docSnap.data();
+        if (!window.revoltsState.displayName) window.revoltsState.displayName = fallbackName;
+      } else {
+        window.revoltsState.displayName = fallbackName;
+        await setDoc(docRef, window.revoltsState);
+      }
+      applyTheme(window.revoltsState.theme || 'dark');
+      renderAll();
+    } catch (err) {
+      console.error("Erro Firestore:", err);
+    }
+  }
+
+  window.saveCloudDB = async function() {
+    try {
+      const docRef = doc(db, "agents", currentDocId);
+      await setDoc(docRef, window.revoltsState, { merge: true });
+      renderAll();
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
+    }
+  };
+
+  window.loginWithGoogle = async function() {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      toggleAuthModal(false);
+    } catch (err) {
+      showSnack(`Erro no login Google: ${err.message}`);
+    }
+  };
+
+  window.loginWithEmail = async function(email, password) {
+    if (!email || password.length < 6) {
+      showSnack('Digite um e-mail válido e senha com no mínimo 6 caracteres.');
+      return;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toggleAuthModal(false);
+    } catch (err) {
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toggleAuthModal(false);
+        showSnack('Nova conta criada e conectada!');
+      } catch (createErr) {
+        showSnack(`Erro: ${createErr.message}`);
+      }
+    }
+  };
+
+  window.logoutUser = async function() {
+    await signOut(auth);
+    toggleAuthModal(false);
+    showSnack('Você saiu da sua conta.');
+  };
+
+  function listenToGlobalRank() {
+    onSnapshot(collection(db, "agents"), (snapshot) => {
+      const players = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const isMe = docSnap.id === currentDocId;
+        players.push({
+          name: isMe ? `${data.displayName || 'Você'} (Você)` : (data.displayName || `Agente_${docSnap.id.substring(0,5)}`),
+          xp: data.xp || 0,
+          accent: isMe ? 'var(--g-blue)' : 'var(--g-green)'
+        });
+      });
+      players.sort((a, b) => b.xp - a.xp);
+      renderRankList(players);
+    });
+  }
 </script>
-</body>
-</html>
+
+<style>
+:root {
+  --g-blue: #1a73e8; --g-red: #ea4335; --g-yellow: #fbbc04; --g-green: #34a853;
+  --shape-sm: 12px; --shape-md: 16px; --shape-lg: 24px; --shape-xl: 28px; --shape-full: 999px;
+  --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+}
+
+[data-theme="light"] {
+  --primary: #1a73e8; --on-primary: #ffffff; --primary-container: #d3e3fd; --on-primary-container: #041e49;
+  --secondary: #34a853; --surface: #f7f9fc; --surface-1: #ffffff; --surface-2: #eef2f8; --surface-3: #e3e9f2;
+  --on-surface: #1b1f24; --on-surface-variant: #44474e; --outline: #c9ced6; --outline-variant: #e2e6ec;
+  --scrim: rgba(20, 26, 36, .55); --glow-hover: 0 8px 28px rgba(26, 115, 232, .18); --grid-line: rgba(26, 115, 232, .06);
+}
+
+[data-theme="dark"] {
+  --primary: #a8c7fa; --on-primary: #062e6f; --primary-container: #0842a0; --on-primary-container: #d3e3fd;
+  --secondary: #7ee2a8; --surface: #0a0e14; --surface-1: #111720; --surface-2: #18202b; --surface-3: #212b38;
+  --on-surface: #e6e9ef; --on-surface-variant: #9aa3b2; --outline: #2a333f; --outline-variant: #1c2430;
+  --scrim: rgba(0, 0, 0, .7); --glow-hover: 0 8px 32px rgba(26, 115, 232, .28); --grid-line: rgba(120, 170, 255, .05);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; font-family: "Google Sans", Roboto, system-ui, sans-serif;
+  background: var(--surface); color: var(--on-surface); overflow-x: hidden;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 44px 44px; pointer-events: none;
+}
+
+.app { display: grid; grid-template-columns: 88px 1fr; grid-template-rows: 72px 1fr; grid-template-areas: "bar bar" "rail main"; min-height: 100dvh; }
+
+.app-bar {
+  grid-area: bar; position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: var(--sp-3);
+  padding: 0 var(--sp-5); background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(18px); border-bottom: 1px solid var(--outline-variant);
+}
+.brand { display: flex; align-items: center; gap: var(--sp-3); text-decoration: none; color: inherit; }
+.brand__mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--shape-sm); background: linear-gradient(135deg, var(--g-blue), var(--g-green) 55%, var(--g-yellow)); }
+.brand__mark svg { width: 22px; height: 22px; fill: #fff; }
+.brand__name { font-size: 1.22rem; font-weight: 600; background: linear-gradient(90deg, var(--on-surface), var(--primary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.app-bar__spacer { flex: 1; }
+
+.icon-btn { width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: var(--shape-full); background: transparent; color: var(--on-surface-variant); cursor: pointer; }
+.icon-btn:hover { background: var(--surface-2); color: var(--on-surface); }
+.icon-btn svg { width: 22px; height: 22px; fill: currentColor; }
+
+.auth-pill {
+  display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px 0 6px;
+  border-radius: var(--shape-full); border: 1px solid var(--outline); background: var(--surface-1);
+  color: var(--on-surface); font-size: .85rem; font-weight: 500; cursor: pointer; transition: all .2s ease;
+}
+.auth-pill:hover { border-color: var(--primary); background: var(--surface-2); }
+.auth-pill__avatar {
+  width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--g-blue), var(--g-red));
+  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: .78rem; overflow: hidden;
+}
+.auth-pill__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.nav-rail {
+  grid-area: rail; position: sticky; top: 72px; height: calc(100dvh - 72px); display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-4) 0; border-right: 1px solid var(--outline-variant); background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.rail-item { width: 64px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border: 0; background: transparent; color: var(--on-surface-variant); font-size: .66rem; cursor: pointer; border-radius: var(--shape-md); }
+.rail-item__pill { width: 52px; height: 32px; display: grid; place-items: center; border-radius: var(--shape-full); }
+.rail-item svg { width: 22px; height: 22px; fill: currentColor; }
+.rail-item.is-active { color: var(--on-primary-container); }
+.rail-item.is-active .rail-item__pill { background: var(--primary-container); }
+
+.content { grid-area: main; padding: var(--sp-6) clamp(var(--sp-4), 4vw, var(--sp-7)) var(--sp-7); max-width: 1240px; width: 100%; margin: 0 auto; }
+.view { display: none; }
+.view.is-active { display: block; }
+
+.hero {
+  display: grid; grid-template-columns: 1fr auto; gap: var(--sp-5); align-items: center; padding: clamp(var(--sp-5), 3vw, var(--sp-6));
+  border-radius: var(--shape-xl); background: linear-gradient(135deg, color-mix(in srgb, var(--primary-container) 70%, var(--surface-1)), var(--surface-1));
+  border: 1px solid var(--outline-variant); margin-bottom: var(--sp-6);
+}
+.hero h1 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); font-weight: 600; margin: 4px 0 8px; }
+.hero h1 em { font-style: normal; background: linear-gradient(90deg, var(--g-blue), var(--g-green)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p { color: var(--on-surface-variant); font-size: .95rem; max-width: 48ch; }
+.hero__stats { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); flex-wrap: wrap; }
+.stat-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--shape-full); background: var(--surface-1); border: 1px solid var(--outline-variant); font-size: .82rem; }
+
+.level-ring { position: relative; width: 140px; height: 140px; display: grid; place-items: center; }
+.level-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.level-ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.level-ring .track { stroke: var(--surface-3); }
+.level-ring .bar { stroke: url(#ringGrad); stroke-dasharray: 264; stroke-dashoffset: 264; transition: stroke-dashoffset 1s ease; }
+.level-ring__label { text-align: center; }
+.level-ring__label b { display: block; font-size: 1.8rem; }
+.level-ring__label span { font-size: .68rem; text-transform: uppercase; color: var(--on
