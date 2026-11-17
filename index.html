@@ -6,154 +6,6 @@
 <meta name="theme-color" content="#0a0e14" />
 <title>Revolts — Portal de Missões</title>
 
-<!-- Firebase SDK v10 (Firestore + Auth) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY_AQUI", // Insira sua apiKey real aqui
-    authDomain: "revolts-b8c77.firebaseapp.com",
-    projectId: "revolts-b8c77",
-    storageBucket: "revolts-b8c77.appspot.com",
-    messagingSenderId: "554456699154",
-    appId: "1:554456699154:web:f379970293c67b0fbf23cb"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-  const googleProvider = new GoogleAuthProvider();
-
-  let guestId = localStorage.getItem('revolts_guest_id');
-  if (!guestId) {
-    guestId = 'visitante_' + Math.random().toString(36).substring(2, 8);
-    localStorage.setItem('revolts_guest_id', guestId);
-  }
-
-  let currentDocId = guestId;
-  window.currentUser = null;
-
-  const DEFAULT_MISSIONS = [
-    { id: 'm1', cat: 'vision', title: 'Rotulagem de Objetos Urbanos', desc: 'Identifique semáforos, faixas e placas em capturas de rua.', xp: 50, done: 2, total: 5, accent: 'var(--g-blue)' },
-    { id: 'm2', cat: 'nlp', title: 'Análise de Sentimento PT-BR', desc: 'Classifique expressões regionais e gírias brasileiras.', xp: 40, done: 4, total: 5, accent: 'var(--g-green)' },
-    { id: 'm3', cat: 'maps', title: 'Verificação de Acessibilidade', desc: 'Confirme rampas e entradas acessíveis em locais públicos.', xp: 75, done: 1, total: 4, accent: 'var(--g-yellow)' },
-    { id: 'm4', cat: 'vision', title: 'Transcrição OCR Manuscrita', desc: 'Valide palavras digitalizadas de documentos históricos.', xp: 60, done: 0, total: 5, accent: 'var(--g-red)' }
-  ];
-
-  window.revoltsState = {
-    displayName: 'Agente Visitante',
-    xp: 120,
-    completed: 7,
-    streak: 3,
-    theme: 'dark',
-    missions: DEFAULT_MISSIONS
-  };
-
-  onAuthStateChanged(auth, async (user) => {
-    window.currentUser = user;
-    if (user) {
-      currentDocId = user.uid;
-      const name = user.displayName || user.email.split('@')[0];
-      updateAuthUI(true, name, user.photoURL);
-      await loadUserData(currentDocId, name);
-    } else {
-      currentDocId = guestId;
-      updateAuthUI(false, 'Visitante', null);
-      await loadUserData(currentDocId, 'Agente Visitante');
-    }
-    listenToGlobalRank();
-  });
-
-  async function loadUserData(docId, fallbackName) {
-    try {
-      const docRef = doc(db, "agents", docId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        window.revoltsState = docSnap.data();
-        if (!window.revoltsState.displayName) window.revoltsState.displayName = fallbackName;
-      } else {
-        window.revoltsState.displayName = fallbackName;
-        await setDoc(docRef, window.revoltsState);
-      }
-      applyTheme(window.revoltsState.theme || 'dark');
-      renderAll();
-    } catch (err) {
-      console.error("Erro Firestore:", err);
-    }
-  }
-
-  window.saveCloudDB = async function() {
-    try {
-      const docRef = doc(db, "agents", currentDocId);
-      await setDoc(docRef, window.revoltsState, { merge: true });
-      renderAll();
-    } catch (err) {
-      console.error("Erro ao salvar:", err);
-    }
-  };
-
-  window.loginWithGoogle = async function() {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      toggleAuthModal(false);
-    } catch (err) {
-      showSnack(`Erro no login Google: ${err.message}`);
-    }
-  };
-
-  window.loginWithEmail = async function(email, password) {
-    if (!email || password.length < 6) {
-      showSnack('Digite um e-mail válido e senha com no mínimo 6 caracteres.');
-      return;
-    }
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toggleAuthModal(false);
-    } catch (err) {
-      try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        toggleAuthModal(false);
-        showSnack('Nova conta criada e conectada!');
-      } catch (createErr) {
-        showSnack(`Erro: ${createErr.message}`);
-      }
-    }
-  };
-
-  window.logoutUser = async function() {
-    await signOut(auth);
-    toggleAuthModal(false);
-    showSnack('Você saiu da sua conta.');
-  };
-
-  function listenToGlobalRank() {
-    onSnapshot(collection(db, "agents"), (snapshot) => {
-      const players = [];
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const isMe = docSnap.id === currentDocId;
-        players.push({
-          name: isMe ? `${data.displayName || 'Você'} (Você)` : (data.displayName || `Agente_${docSnap.id.substring(0,5)}`),
-          xp: data.xp || 0,
-          accent: isMe ? 'var(--g-blue)' : 'var(--g-green)'
-        });
-      });
-      players.sort((a, b) => b.xp - a.xp);
-      renderRankList(players);
-    });
-  }
-</script>
-
 <style>
 :root {
   --g-blue: #1a73e8; --g-red: #ea4335; --g-yellow: #fbbc04; --g-green: #34a853;
@@ -247,4 +99,369 @@ body::before {
 .level-ring .bar { stroke: url(#ringGrad); stroke-dasharray: 264; stroke-dashoffset: 264; transition: stroke-dashoffset 1s ease; }
 .level-ring__label { text-align: center; }
 .level-ring__label b { display: block; font-size: 1.8rem; }
-.level-ring__label span { font-size: .68rem; text-transform: uppercase; color: var(--on
+.level-ring__label span { font-size: .68rem; text-transform: uppercase; color: var(--on-surface-variant); }
+
+.section-head { margin-bottom: var(--sp-4); }
+.section-head h2 { font-size: 1.18rem; font-weight: 600; }
+.mission-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(276px, 1fr)); gap: var(--sp-4); }
+.mission {
+  display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-5); border-radius: var(--shape-lg);
+  background: var(--surface-1); border: 1px solid var(--outline-variant); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease;
+}
+.mission:hover { transform: translateY(-4px); box-shadow: var(--glow-hover); border-color: var(--primary); }
+.mission__top { display: flex; justify-content: space-between; align-items: center; }
+.mission__icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--shape-md); background: color-mix(in srgb, var(--accent, var(--primary)) 14%, var(--surface-1)); color: var(--accent, var(--primary)); }
+.mission__icon svg { width: 22px; height: 22px; fill: currentColor; }
+.mission__points { font-size: .8rem; font-weight: 700; padding: 4px 10px; border-radius: var(--shape-full); background: color-mix(in srgb, var(--accent, var(--primary)) 14%, transparent); color: var(--accent, var(--primary)); }
+.mission__title { font-size: 1rem; font-weight: 600; }
+.mission__desc { font-size: .82rem; color: var(--on-surface-variant); line-height: 1.45; }
+.progress { height: 8px; border-radius: var(--shape-full); background: var(--surface-3); overflow: hidden; }
+.progress__bar { height: 100%; background: var(--accent, var(--primary)); transition: width .6s ease; }
+
+.modal-scrim {
+  position: fixed; inset: 0; z-index: 90; background: var(--scrim); backdrop-filter: blur(4px);
+  display: none; place-items: center; padding: var(--sp-4);
+}
+.modal-scrim.is-open { display: grid; }
+.modal-card {
+  width: min(400px, 100%); padding: var(--sp-6); border-radius: var(--shape-xl);
+  background: var(--surface-1); border: 1px solid var(--outline); box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  display: flex; flex-direction: column; gap: var(--sp-4);
+}
+.modal-card h3 { font-size: 1.3rem; margin: 0; }
+.modal-card p { font-size: .85rem; color: var(--on-surface-variant); margin: 0; }
+
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: 12px; height: 46px; width: 100%;
+  border-radius: var(--shape-full); border: 1px solid var(--outline); background: var(--surface-2);
+  color: var(--on-surface); font-size: .92rem; font-weight: 600; cursor: pointer; transition: background .2s;
+}
+.btn-google:hover { background: var(--surface-3); }
+
+.divider { display: flex; align-items: center; gap: 12px; color: var(--on-surface-variant); font-size: .75rem; text-transform: uppercase; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--outline-variant); }
+
+.field {
+  width: 100%; height: 46px; padding: 0 16px; border-radius: var(--shape-md);
+  border: 1px solid var(--outline); background: var(--surface-2); color: var(--on-surface); font-size: .92rem; outline: none;
+}
+.field:focus { border-color: var(--primary); }
+
+.btn-primary {
+  height: 46px; width: 100%; border: 0; border-radius: var(--shape-full);
+  background: var(--primary); color: var(--on-primary); font-size: .92rem; font-weight: 600; cursor: pointer;
+}
+.btn-danger {
+  height: 42px; width: 100%; border: 1px solid var(--g-red); border-radius: var(--shape-full);
+  background: transparent; color: var(--g-red); font-size: .88rem; font-weight: 600; cursor: pointer;
+}
+
+.snackbar { position: fixed; z-index: 100; left: 50%; bottom: 24px; transform: translate(-50%, 140%); display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: var(--shape-sm); background: var(--surface-3); color: var(--on-surface); border: 1px solid var(--outline); transition: transform .3s ease; }
+.snackbar.is-open { transform: translate(-50%, 0); }
+.snackbar__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-areas: "bar" "main"; }
+  .nav-rail { position: fixed; bottom: 0; left: 0; right: 0; top: auto; height: 72px; flex-direction: row; justify-content: space-around; z-index: 45; background: var(--surface); border-top: 1px solid var(--outline-variant); }
+  .content { padding-bottom: 110px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <header class="app-bar">
+    <a class="brand" href="#">
+      <span class="brand__mark"><svg viewBox="0 0 24 24"><path d="M12 2 2 13h4v9h5v-6h2v6h5v-9h4L12 2Z"/></svg></span>
+      <span class="brand__name">Revolts</span>
+    </a>
+    <div class="app-bar__spacer"></div>
+    <button class="icon-btn" id="themeToggle" title="Alternar tema"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg></button>
+    <button class="auth-pill" id="authTriggerBtn" onclick="toggleAuthModal(true)">
+      <span class="auth-pill__avatar" id="headerAvatar">?</span>
+      <span id="headerUserName">Entrar</span>
+    </button>
+  </header>
+
+  <nav class="nav-rail">
+    <button class="rail-item is-active" data-view="home"><span class="rail-item__pill"><svg viewBox="0 0 24 24"><path d="M4 21V9l8-6 8 6v12h-6v-7h-4v7Z"/></svg></span>Início</button>
+    <button class="rail-item" data-view="missions"><span class="rail-item__pill"><svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4Z"/></svg></span>Missões</button>
+    <button class="rail-item" data-view="rank"><span class="rail-item__pill"><svg viewBox="0 0 24 24"><path d="M7 21H4v-8h3Zm6 0h-3V3h3Zm7 0h-3V9h3Z"/></svg></span>Ranking</button>
+  </nav>
+
+  <main class="content">
+    <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1a73e8"/><stop offset="50%" stop-color="#34a853"/><stop offset="100%" stop-color="#fbbc04"/></linearGradient></defs></svg>
+
+    <section class="view is-active" id="view-home">
+      <div class="hero">
+        <div>
+          <span style="font-size:.74rem; font-weight:600; color:var(--primary); text-transform:uppercase;">Nuvem Firebase Conectada</span>
+          <h1>Olá, <em id="heroUserName">Agente</em></h1>
+          <p>Faça login com Google ou E-mail para salvar seu progresso permanentemente e disputar o topo do Ranking Global.</p>
+          <div class="hero__stats">
+            <div class="stat-chip">⭐ XP: <strong id="statXp">0</strong></div>
+            <div class="stat-chip">✅ Missões: <strong id="statMissions">0</strong></div>
+          </div>
+        </div>
+        <div class="level-ring">
+          <svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="42"/><circle class="bar" id="levelRingBar" cx="50" cy="50" r="42"/></svg>
+          <div class="level-ring__label"><b id="levelNumber">1</b><span>Nível</span></div>
+        </div>
+      </div>
+      <div class="section-head"><h2>Missões Disponíveis</h2></div>
+      <div class="mission-grid" id="missionGrid"></div>
+    </section>
+
+    <section class="view" id="view-missions">
+      <div class="section-head"><h2>Todas as Missões</h2></div>
+      <div class="mission-grid" id="missionGridFull"></div>
+    </section>
+
+    <section class="view" id="view-rank">
+      <div class="section-head"><h2>Ranking Global em Tempo Real</h2></div>
+      <div class="mission-grid" id="rankList"></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-scrim" id="authModal" onclick="if(event.target===this) toggleAuthModal(false)">
+  <div class="modal-card" id="authModalContent"></div>
+</div>
+
+<div class="snackbar" id="snackbar"><span class="snackbar__dot"></span><span id="snackbarMsg">Pronto</span></div>
+
+<!-- Lógica do Aplicativo e Firebase Isolada de Forma Segura -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY_AQUI", // Cole sua apiKey real aqui
+    authDomain: "revolts-b8c77.firebaseapp.com",
+    projectId: "revolts-b8c77",
+    storageBucket: "revolts-b8c77.appspot.com",
+    messagingSenderId: "554456699154",
+    appId: "1:554456699154:web:f379970293c67b0fbf23cb"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  let guestId = localStorage.getItem('revolts_guest_id');
+  if (!guestId) {
+    guestId = 'visitante_' + Math.random().toString(36).substring(2, 8);
+    localStorage.setItem('revolts_guest_id', guestId);
+  }
+
+  let currentDocId = guestId;
+  window.currentUser = null;
+
+  const DEFAULT_MISSIONS = [
+    { id: 'm1', cat: 'vision', title: 'Rotulagem de Objetos Urbanos', desc: 'Identifique semáforos, faixas e placas em capturas de rua.', xp: 50, done: 2, total: 5, accent: 'var(--g-blue)' },
+    { id: 'm2', cat: 'nlp', title: 'Análise de Sentimento PT-BR', desc: 'Classifique expressões regionais e gírias brasileiras.', xp: 40, done: 4, total: 5, accent: 'var(--g-green)' },
+    { id: 'm3', cat: 'maps', title: 'Verificação de Acessibilidade', desc: 'Confirme rampas e entradas acessíveis em locais públicos.', xp: 75, done: 1, total: 4, accent: 'var(--g-yellow)' },
+    { id: 'm4', cat: 'vision', title: 'Transcrição OCR Manuscrita', desc: 'Valide palavras digitalizadas de documentos históricos.', xp: 60, done: 0, total: 5, accent: 'var(--g-red)' }
+  ];
+
+  window.revoltsState = {
+    displayName: 'Agente Visitante',
+    xp: 120,
+    completed: 7,
+    streak: 3,
+    theme: 'dark',
+    missions: DEFAULT_MISSIONS
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    window.currentUser = user;
+    if (user) {
+      currentDocId = user.uid;
+      const name = user.displayName || user.email.split('@')[0];
+      updateAuthUI(true, name, user.photoURL);
+      await loadUserData(currentDocId, name);
+    } else {
+      currentDocId = guestId;
+      updateAuthUI(false, 'Visitante', null);
+      await loadUserData(currentDocId, 'Agente Visitante');
+    }
+    listenToGlobalRank();
+  });
+
+  async function loadUserData(docId, fallbackName) {
+    try {
+      const docRef = doc(db, "agents", docId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        window.revoltsState = docSnap.data();
+        if (!window.revoltsState.displayName) window.revoltsState.displayName = fallbackName;
+      } else {
+        window.revoltsState.displayName = fallbackName;
+        await setDoc(docRef, window.revoltsState);
+      }
+      applyTheme(window.revoltsState.theme || 'dark');
+      renderAll();
+    } catch (err) {
+      console.error("Erro Firestore:", err);
+      renderAll();
+    }
+  }
+
+  window.saveCloudDB = async function() {
+    try {
+      const docRef = doc(db, "agents", currentDocId);
+      await setDoc(docRef, window.revoltsState, { merge: true });
+      renderAll();
+    } catch (err) {
+      console.error("Erro ao salvar:", err);
+    }
+  };
+
+  window.loginWithGoogle = async function() {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      toggleAuthModal(false);
+    } catch (err) {
+      showSnack(`Erro no login Google: ${err.message}`);
+    }
+  };
+
+  window.loginWithEmail = async function(email, password) {
+    if (!email || password.length < 6) {
+      showSnack('Digite um e-mail válido e senha com no mínimo 6 caracteres.');
+      return;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toggleAuthModal(false);
+    } catch (err) {
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toggleAuthModal(false);
+        showSnack('Nova conta criada e conectada!');
+      } catch (createErr) {
+        showSnack(`Erro: ${createErr.message}`);
+      }
+    }
+  };
+
+  window.logoutUser = async function() {
+    await signOut(auth);
+    toggleAuthModal(false);
+    showSnack('Você saiu da sua conta.');
+  };
+
+  function listenToGlobalRank() {
+    onSnapshot(collection(db, "agents"), (snapshot) => {
+      const players = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const isMe = docSnap.id === currentDocId;
+        players.push({
+          name: isMe ? `${data.displayName || 'Você'} (Você)` : (data.displayName || `Agente_${docSnap.id.substring(0,5)}`),
+          xp: data.xp || 0,
+          accent: isMe ? 'var(--g-blue)' : 'var(--g-green)'
+        });
+      });
+      players.sort((a, b) => b.xp - a.xp);
+      renderRankList(players);
+    });
+  }
+</script>
+
+<!-- Scripts de UI da Interface -->
+<script>
+let snackTimer;
+function showSnack(msg) {
+  const sb = document.getElementById('snackbar');
+  document.getElementById('snackbarMsg').textContent = msg;
+  sb.classList.add('is-open');
+  clearTimeout(snackTimer);
+  snackTimer = setTimeout(() => sb.classList.remove('is-open'), 3500);
+}
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  if (window.revoltsState) window.revoltsState.theme = t;
+}
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const next = (window.revoltsState && window.revoltsState.theme === 'dark') ? 'light' : 'dark';
+  applyTheme(next);
+  if (typeof window.saveCloudDB === 'function') window.saveCloudDB();
+});
+
+document.querySelectorAll('.rail-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rail-item').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('is-active'));
+    document.getElementById(`view-${btn.dataset.view}`).classList.add('is-active');
+  });
+});
+
+window.updateAuthUI = function(isLoggedIn, name, photoURL) {
+  const avatarEl = document.getElementById('headerAvatar');
+  const nameEl = document.getElementById('headerUserName');
+  const heroName = document.getElementById('heroUserName');
+
+  if (heroName) heroName.textContent = name;
+  if (nameEl) nameEl.textContent = isLoggedIn ? name : 'Entrar';
+
+  if (avatarEl) {
+    if (photoURL) {
+      avatarEl.innerHTML = `<img src="${photoURL}" alt="Avatar" />`;
+    } else {
+      avatarEl.textContent = name.charAt(0).toUpperCase();
+    }
+  }
+};
+
+window.toggleAuthModal = function(open) {
+  const modal = document.getElementById('authModal');
+  const box = document.getElementById('authModalContent');
+
+  if (!open) {
+    modal.classList.remove('is-open');
+    return;
+  }
+
+  if (window.currentUser) {
+    box.innerHTML = `
+      <h3>Conta Conectada</h3>
+      <p>Logado como <strong>${window.currentUser.email}</strong>. Seu progresso está salvo na nuvem.</p>
+      <button class="btn-danger" onclick="logoutUser()">Sair da Conta</button>
+      <button class="btn-google" onclick="toggleAuthModal(false)">Fechar</button>
+    `;
+  } else {
+    box.innerHTML = `
+      <h3>Entrar no Revolts</h3>
+      <p>Sincronize seu nível, XP e conquistas na nuvem.</p>
+      <button class="btn-google" onclick="loginWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/><path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/></svg>
+        Continuar com Google
+      </button>
+      <div class="divider">ou use seu e-mail</div>
+      <input type="email" id="authEmail" class="field" placeholder="Seu e-mail" />
+      <input type="password" id="authPass" class="field" placeholder="Sua senha (mín. 6 dígitos)" />
+      <button class="btn-primary" onclick="loginWithEmail(document.getElementById('authEmail').value, document.getElementById('authPass').value)">Entrar ou Criar Conta</button>
+    `;
+  }
+  modal.classList.add('is-open');
+};
+
+window.completeMissionStep = function(id) {
+  if (!window.revoltsState) return;
+  const m = window.revoltsState.missions.find(item => item.id === id);
+  if (!m) return;
