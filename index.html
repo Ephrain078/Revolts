@@ -1,197 +1,354 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CryptoFaucets — Lista de Faucets Gratuitas (Sem Investimento)</title>
-  <meta name="description" content="Diretório atualizado com as melhores faucets de criptomoedas gratuitas que pagam sem precisar investir dinheiro." />
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FaucetPay Aggregator | Ganhe Cripto Grátis</title>
+    <meta name="description" content="Lista verificada de faucets que pagam diretamente na FaucetPay. Ganhe criptomoedas grátis sem investimento.">
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            950: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .faucet-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3); }
+        .badge { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600; }
+        .filter-btn.active { background-color: #10b981; color: white; border-color: #10b981; }
+        /* Estilo para o modal */
+        .modal-backdrop { backdrop-filter: blur(4px); }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+<body class="bg-slate-950 text-slate-200 antialiased">
 
-  <!-- Cabeçalho -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-cyan-400">
-          ⚡ CryptoFaucets
-        </h1>
-        <p class="text-xs text-slate-400">Curadoria de faucets 100% gratuitas — sem depósito necessário</p>
-      </div>
-      <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/70 px-3 py-1.5 rounded-full border border-slate-700">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Lista verificada regularmente</span>
-      </div>
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">💧</span>
+                <h1 class="text-xl font-bold tracking-tight text-white">FaucetPay <span class="text-emerald-500">Aggregator</span></h1>
+            </div>
+            <a href="https://faucetpay.io/?r=SEU_ID_DE_AFILIADO_FAUCETPAY_AQUI" target="_blank" rel="noopener noreferrer nofollow" class="text-sm font-medium text-emerald-400 hover:text-emerald-300 transition">
+                Criar Conta FaucetPay &rarr;
+            </a>
+        </div>
+    </header>
+
+    <!-- Banner de Onboarding FaucetPay (Afiliado) -->
+    <section class="bg-gradient-to-r from-emerald-900/50 to-slate-900 border-b border-emerald-800/30">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-800/50 rounded-2xl p-6 md:p-8 border border-slate-700">
+                <div class="text-center md:text-left">
+                    <h2 class="text-2xl font-bold text-white mb-2">Ainda não tem uma conta FaucetPay?</h2>
+                    <p class="text-slate-400 max-w-lg">Crie sua micro-carteira gratuita em menos de 2 minutos e receba todos os pagamentos dos faucets listados abaixo diretamente nela. Sem taxas e sem investimento.</p>
+                </div>
+                <!-- SUBSTITUA O LINK ABAIXO PELO SEU LINK DE AFILIADO DA FAUCETPAY -->
+                <a href="https://faucetpay.io/?r=SEU_ID_DE_AFILIADO_FAUCETPAY_AQUI" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center justify-center px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-500/20 whitespace-nowrap">
+                    Criar Conta Grátis
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Espaço de Anúncio Superior 728x90 -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="w-full bg-slate-800/30 border border-dashed border-slate-700 rounded-lg flex items-center justify-center text-slate-600 text-sm h-[90px] md:h-[90px]">
+            <!-- INSIRA AQUI SUA TAG DE ANÚNCIO 728x90 (ex: A-Ads, Adsterra) -->
+            <!-- Exemplo: <iframe src="..." width="728" height="90" frameborder="0"></iframe> -->
+            <span>Espaço Publicitário 728x90</span>
+        </div>
     </div>
-  </header>
 
-  <!-- Espaço para Banner Superior (Ex: A-Ads iframe) -->
-  <div class="max-w-6xl mx-auto w-full px-4 pt-6">
-    <div class="w-full h-24 bg-slate-900 border border-dashed border-slate-700 rounded-lg flex items-center justify-center text-xs text-slate-500">
-      Espaço reservado para Banner (728x90 — ex: A-Ads)
-    </div>
-  </div>
-
-  <!-- Conteúdo Principal -->
-  <main class="max-w-6xl mx-auto w-full px-4 py-8 flex-1">
-    
     <!-- Barra de Busca e Filtros -->
-    <div class="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center mb-8">
-      <input 
-        type="text" 
-        id="searchInput" 
-        placeholder="Buscar faucet pelo nome ou descrição..." 
-        class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-full md:w-80"
-      />
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <!-- Busca -->
+            <div class="relative w-full md:w-72">
+                <input type="text" id="search-input" placeholder="Buscar faucet..." class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                <svg class="absolute left-3 top-3 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <!-- Filtros de Moeda -->
+            <div id="filter-container" class="flex flex-wrap gap-2">
+                <!-- Botões gerados via JS -->
+            </div>
+        </div>
+    </section>
 
-      <div class="flex flex-wrap gap-2" id="filterButtons">
-        <button data-filter="ALL" class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-500 text-slate-950 transition">Todas</button>
-        <button data-filter="BTC" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">BTC</button>
-        <button data-filter="LTC" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">LTC</button>
-        <button data-filter="DOGE" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">DOGE</button>
-        <button data-filter="SOL" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">SOL</button>
-        <button data-filter="FaucetPay" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">FaucetPay</button>
-      </div>
-    </div>
+    <!-- Main - Grid de Faucets -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-700 border-t-emerald-500"></div>
+            <p class="mt-4 text-slate-500">Carregando faucets...</p>
+        </div>
 
-    <!-- Grid de Cards -->
-    <div id="faucetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      <!-- Os cards serão injetados aqui via JavaScript -->
-    </div>
+        <div id="faucet-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-0 transition-opacity duration-500">
+            <!-- Cards injetados via JS -->
+        </div>
 
-    <!-- Mensagem caso nenhum filtro retorne resultado -->
-    <div id="emptyState" class="hidden text-center py-16 text-slate-500">
-      Nenhuma faucet encontrada com esse filtro.
-    </div>
+        <div id="error-message" class="hidden text-center py-12 bg-red-900/20 rounded-lg border border-red-800/50">
+            <p class="text-red-400 font-medium">Não foi possível carregar a lista de faucets.</p>
+            <p class="text-sm text-red-500 mt-1">Verifique se o arquivo <code>faucets.json</code> está no mesmo diretório.</p>
+        </div>
+    </main>
 
-  </main>
+    <!-- Modal de Retenção com Timer -->
+    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div id="modal-backdrop" class="absolute inset-0 bg-black/70 modal-backdrop transition-opacity"></div>
+        <!-- Conteúdo do Modal -->
+        <div class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all scale-95 opacity-0" id="modal-content">
+            <h3 class="text-xl font-bold text-white mb-2" id="modal-title">Preparando sua recompensa...</h3>
+            <p class="text-sm text-slate-400 mb-6" id="modal-description">Aguarde alguns segundos.</p>
 
-  <!-- Rodapé com Aviso de Transparência -->
-  <footer class="border-t border-slate-800 bg-slate-900/50 mt-12">
-    <div class="max-w-6xl mx-auto px-4 py-6 text-center text-xs text-slate-500 space-y-2">
-      <p>
-        <strong>Aviso de Transparência:</strong> Este site atua apenas como um diretório gratuito. Alguns links contêm códigos de indicação (afiliado), o que ajuda a manter o projeto online sem nenhum custo para você.
-      </p>
-      <p>Nunca invista dinheiro em faucets que prometem retornos garantidos.</p>
-    </div>
-  </footer>
-
-  <!-- Script de Carregamento e Filtros -->
-  <script>
-    let allFaucets = [];
-    let currentFilter = 'ALL';
-
-    async function loadFaucets() {
-      try {
-        const response = await fetch('./faucets.json');
-        allFaucets = await response.json();
-        renderFaucets();
-      } catch (error) {
-        document.getElementById('faucetGrid').innerHTML = `
-          <div class="col-span-full text-center text-red-400 py-10">
-            Erro ao carregar faucets.json. Verifique se o arquivo está na mesma pasta do index.html.
-          </div>
-        `;
-      }
-    }
-
-    function renderFaucets() {
-      const grid = document.getElementById('faucetGrid');
-      const emptyState = document.getElementById('emptyState');
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-      const filtered = allFaucets.filter(item => {
-        const matchesSearch = item.nome.toLowerCase().includes(searchTerm) || 
-                              item.descricao.toLowerCase().includes(searchTerm);
-        
-        if (currentFilter === 'ALL') return matchesSearch;
-        if (currentFilter === 'FaucetPay') return matchesSearch && item.pagamento.toLowerCase().includes('faucetpay');
-        return matchesSearch && item.moedas.includes(currentFilter);
-      });
-
-      grid.innerHTML = '';
-
-      if (filtered.length === 0) {
-        emptyState.classList.remove('hidden');
-        return;
-      }
-      emptyState.classList.add('hidden');
-
-      filtered.forEach(faucet => {
-        const isPaying = faucet.status === 'pagando';
-        const statusBadge = isPaying
-          ? `<span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Pagando</span>`
-          : `<span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Atenção</span>`;
-
-        const coinsHtml = faucet.moedas.map(m => 
-          `<span class="px-2 py-0.5 text-[11px] rounded bg-slate-800 text-cyan-300 font-mono">${m}</span>`
-        ).join('');
-
-        const card = `
-          <article class="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col justify-between transition shadow-sm">
-            <div>
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <h2 class="text-lg font-semibold text-white">${faucet.nome}</h2>
-                ${statusBadge}
-              </div>
-              <p class="text-sm text-slate-400 mb-4 leading-relaxed">${faucet.descricao}</p>
+            <!-- Espaço de Anúncio 300x250 -->
+            <div class="w-full h-[250px] bg-slate-800/50 border border-dashed border-slate-700 rounded-lg flex items-center justify-center text-slate-600 text-sm mb-6">
+                <!-- INSIRA AQUI SUA TAG DE ANÚNCIO 300x250 (ex: A-Ads, Adsterra) -->
+                <!-- Exemplo: <iframe src="..." width="300" height="250" frameborder="0"></iframe> -->
+                <span>Espaço Publicitário 300x250</span>
             </div>
 
-            <div>
-              <div class="flex flex-wrap gap-1.5 mb-4">
-                ${coinsHtml}
-              </div>
-
-              <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 border-t border-slate-800 pt-3 mb-4">
-                <div>
-                  <span class="block text-slate-500">Timer</span>
-                  <span class="text-slate-200 font-medium">${faucet.timer}</span>
-                </div>
-                <div>
-                  <span class="block text-slate-500">Pagamento</span>
-                  <span class="text-slate-200 font-medium">${faucet.pagamento}</span>
-                </div>
-              </div>
-
-              <a 
-                href="${faucet.link_afiliado}" 
-                target="_blank" 
-                rel="noopener noreferrer nofollow"
-                class="block w-full text-center py-2.5 px-4 rounded-lg font-semibold text-sm transition ${
-                  isPaying 
-                    ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950' 
-                    : 'bg-slate-800 text-slate-500 pointer-events-none'
-                }"
-              >
-                ${isPaying ? 'Acessar Faucet ↗' : 'Indisponível'}
-              </a>
+            <!-- Timer -->
+            <div class="text-center mb-4">
+                <span class="text-3xl font-bold text-emerald-400" id="modal-timer">10</span>
+                <span class="text-slate-400">segundos</span>
             </div>
-          </article>
-        `;
-        grid.insertAdjacentHTML('beforeend', card);
-      });
-    }
 
-    // Eventos de filtro
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-          b.classList.remove('bg-cyan-500', 'text-slate-950');
-          b.classList.add('bg-slate-800', 'text-slate-300');
+            <!-- Botão Final (inicialmente oculto) -->
+            <a id="modal-link" href="#" target="_blank" rel="noopener noreferrer nofollow" class="hidden w-full text-center bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                Continuar para a Faucet &rarr;
+            </a>
+
+            <!-- Botão de Fechar -->
+            <button id="modal-close" class="absolute top-3 right-3 text-slate-500 hover:text-slate-300 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer com Transparência -->
+    <footer class="bg-slate-900 border-t border-slate-800 mt-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-2">Aviso de Transparência</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Este site contém links de afiliado. Ao criar uma conta ou se registrar através deles, podemos receber uma pequena comissão sem qualquer custo adicional para você. Isso nos ajuda a manter o projeto ativo.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-white mb-2">Alerta de Segurança</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Faucets são uma forma de ganhar criptomoedas gratuitamente, mas os ganhos são pequenos e exigem tempo. <strong>Nunca invista dinheiro</strong> em sites de faucet ou em esquemas que prometem retornos financeiros. Use apenas o que é gratuito.
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 mt-6 pt-6 text-center text-xs text-slate-600">
+                &copy; 2026 FaucetPay Aggregator. Projeto open-source para fins educacionais.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('faucet-grid');
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('error-message');
+            const filterContainer = document.getElementById('filter-container');
+            const searchInput = document.getElementById('search-input');
+
+            // Elementos do Modal
+            const modal = document.getElementById('modal');
+            const modalBackdrop = document.getElementById('modal-backdrop');
+            const modalContent = document.getElementById('modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('modal-description');
+            const modalTimer = document.getElementById('modal-timer');
+            const modalLink = document.getElementById('modal-link');
+            const modalClose = document.getElementById('modal-close');
+
+            let allFaucets = [];
+            let activeFilter = 'Todas';
+            let timerInterval = null;
+
+            // 1. Carregar Dados
+            fetch('faucets.json')
+                .then(response => {
+                    if (!response.ok) throw new Error('Falha ao carregar o JSON');
+                    return response.json();
+                })
+                .then(data => {
+                    loading.classList.add('hidden');
+                    if (data && data.length > 0) {
+                        allFaucets = data;
+                        renderFilters(data);
+                        renderCards(data);
+                        grid.classList.remove('opacity-0');
+                    } else {
+                        grid.innerHTML = '<p class="col-span-full text-center text-slate-500 py-10">Nenhum faucet encontrado.</p>';
+                        grid.classList.remove('opacity-0');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    loading.classList.add('hidden');
+                    errorMsg.classList.remove('hidden');
+                });
+
+            // 2. Renderizar Filtros
+            function renderFilters(faucets) {
+                const moedas = ['Todas', ...new Set(faucets.flatMap(f => f.moedas))];
+                filterContainer.innerHTML = moedas.map(moeda => 
+                    `<button class="filter-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white transition ${moeda === 'Todas' ? 'active' : ''}" data-filter="${moeda}">${moeda}</button>`
+                ).join('');
+
+                filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        filterContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        activeFilter = e.target.dataset.filter;
+                        applyFilters();
+                    });
+                });
+            }
+
+            // 3. Aplicar Filtros e Busca
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filtered = allFaucets.filter(faucet => {
+                    const matchesSearch = faucet.nome.toLowerCase().includes(searchTerm) || faucet.descricao.toLowerCase().includes(searchTerm);
+                    const matchesCoin = activeFilter === 'Todas' || faucet.moedas.includes(activeFilter);
+                    return matchesSearch && matchesCoin;
+                });
+                renderCards(filtered);
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+
+            // 4. Renderizar Cards
+            function renderCards(faucets) {
+                grid.innerHTML = faucets.map(faucet => {
+                    const isDestaque = faucet.status === 'pagando';
+                    const destaqueBadge = isDestaque 
+                        ? '<span class="badge bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">✔ Pagando</span>' 
+                        : '<span class="badge bg-amber-500/10 text-amber-400 border border-amber-500/20">⚠ Pausada</span>';
+
+                    const moedasHtml = faucet.moedas.slice(0, 6).map(m => 
+                        `<span class="badge bg-slate-800 text-slate-300 border border-slate-700">${m}</span>`
+                    ).join('');
+                    
+                    const extraMoedas = faucet.moedas.length > 6 
+                        ? `<span class="badge bg-slate-800 text-slate-500">+${faucet.moedas.length - 6}</span>` 
+                        : '';
+
+                    // O link do botão agora chama o modal em vez de abrir diretamente
+                    return `
+                        <div class="faucet-card bg-slate-900 rounded-xl border border-slate-800 p-6 flex flex-col h-full transition-all duration-300 ease-in-out">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">${faucet.nome}</h3>
+                                    <span class="text-xs text-slate-500">${faucet.tipo}</span>
+                                </div>
+                                ${destaqueBadge}
+                            </div>
+                            
+                            <p class="text-sm text-slate-400 mb-4 flex-grow">${faucet.descricao}</p>
+                            
+                            <div class="mb-4 space-y-2">
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${moedasHtml}
+                                    ${extraMoedas}
+                                </div>
+                                <div class="flex items-center justify-between text-xs text-slate-500 bg-slate-950/50 p-2 rounded-lg border border-slate-800">
+                                    <span class="font-semibold text-slate-300">Timer:</span>
+                                    <span>${faucet.timer}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs text-slate-500 bg-slate-950/50 p-2 rounded-lg border border-slate-800">
+                                    <span class="font-semibold text-slate-300">Saque Mínimo:</span>
+                                    <span>${faucet.saque}</span>
+                                </div>
+                            </div>
+
+                            <button onclick="openModal('${faucet.nome}', '${faucet.link_afiliado}')" 
+                               class="mt-auto block w-full text-center bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 rounded-lg transition-colors duration-200 text-sm shadow-lg shadow-emerald-500/10">
+                                Reivindicar Grátis
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 5. Lógica do Modal e Timer
+            window.openModal = function(faucetName, affiliateLink) {
+                // Reseta o estado do modal
+                modalTimer.textContent = '10';
+                modalLink.classList.add('hidden');
+                modalTitle.textContent = `Reivindicando ${faucetName}`;
+                modalDescription.textContent = 'Aguarde o contador para continuar.';
+                modalLink.href = affiliateLink; // Define o link de afiliado
+
+                // Exibe o modal
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                // Pequeno delay para animação de escala
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+
+                // Inicia o contador
+                let count = 10;
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    count--;
+                    modalTimer.textContent = count;
+                    if (count <= 0) {
+                        clearInterval(timerInterval);
+                        modalTimer.textContent = '0';
+                        modalDescription.textContent = 'Pronto! Clique no botão abaixo.';
+                        modalLink.classList.remove('hidden'); // Revela o botão final
+                    }
+                }, 1000);
+            };
+
+            function closeModal() {
+                modalContent.classList.add('scale-95', 'opacity-0');
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    if (timerInterval) clearInterval(timerInterval);
+                }, 150);
+            }
+
+            // Eventos de fechamento do modal
+            modalClose.addEventListener('click', closeModal);
+            modalBackdrop.addEventListener('click', closeModal);
+            // Fechar com ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
         });
-        btn.classList.remove('bg-slate-800', 'text-slate-300');
-        btn.classList.add('bg-cyan-500', 'text-slate-950');
-        
-        currentFilter = btn.dataset.filter;
-        renderFaucets();
-      });
-    });
-
-    // Evento de busca
-    document.getElementById('searchInput').addEventListener('input', renderFaucets);
-
-    // Inicializa
-    loadFaucets();
-  </script>
+    </script>
 </body>
 </html>
