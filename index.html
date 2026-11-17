@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#1C1B1F" />
-<title>Revolts — Rede de Agentes </title>
+<title>Revolts — Rede de Agentes e IA</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -119,8 +119,8 @@ body::after{
   border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface); cursor: pointer; transition: background .22s;
 }
 .icon-btn:hover{ background: var(--surface-hover); }
-.icon-btn.user-photo{ background-size: cover; background-position: center; font-size: 13px; font-weight: 800; color: var(--on-primary); }
-html[data-theme="light"] .icon-btn.user-photo{ color: #fff; }
+.icon-btn.user-photo{ background-size: cover; background-position: center; }
+.icon-btn.user-photo .material-symbols-rounded{ display: none; }
 
 .card{
   position: relative; background: var(--surface); border: 1px solid var(--outline); border-radius: var(--r-lg);
@@ -222,7 +222,6 @@ html[data-theme="light"] .rank-avatar{ color: #fff; }
 .rank-meta{ font-size: 11.5px; color: var(--on-surface-variant); }
 .rank-xp{ font-size: 14px; font-weight: 900; color: var(--primary); }
 
-/* ========== FÓRUM ========== */
 .forum-banner{
   padding: 14px 18px; border-radius: var(--r-md);
   background: var(--primary-container); border: 1px solid var(--primary);
@@ -286,9 +285,7 @@ html[data-theme="light"] .forum-author-av{ color: #fff; }
   font-size: 44px; color: var(--primary); display: block; margin-bottom: 12px;
 }
 
-/* Modal wide (post detail) */
 .dialog.dialog-wide{ max-width: 640px; }
-
 .new-post-form{ display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
 .new-post-form label{
   font-size: 12px; font-weight: 600; color: var(--on-surface-variant);
@@ -310,7 +307,6 @@ html[data-theme="light"] .forum-author-av{ color: #fff; }
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-container);
 }
-
 .post-detail-head{ margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--outline); }
 .post-detail-head h2{ margin: 8px 0 10px; font-size: 20px; font-weight: 800; line-height: 1.3; }
 .post-detail-body{
@@ -349,7 +345,6 @@ html[data-theme="light"] .forum-author-av{ color: #fff; }
 }
 .reply-form textarea:focus{ border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container); }
 
-/* ========== OVERLAY / DIALOG ========== */
 .overlay{
   position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px;
   background: rgba(0,0,0,.55); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity .3s;
@@ -381,7 +376,6 @@ html[data-theme="light"] .brand-mark{ color: #fff; }
 .dialog-head h2{ margin: 0 0 6px; font-size: 21px; font-weight: 800; letter-spacing: -.02em; }
 .dialog-head p{ margin: 0; font-size: 13.5px; }
 
-/* Auth */
 .tabs{
   display: flex; gap: 4px; padding: 4px; border-radius: var(--r-full);
   background: var(--surface); border: 1px solid var(--outline); margin-bottom: 20px;
@@ -454,7 +448,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
 @media (max-width: 820px){
   .rail{ inset: auto 0 0 0; width: 100%; height: 70px; flex-direction: row; justify-content: space-around; border-right: none; border-top: 1px solid var(--outline); padding: 0 8px calc(env(safe-area-inset-bottom, 0px)); }
   .rail-logo, .rail-spacer, .rail-sync{ display: none; }
-  .rail-item{ width: 76px; height: 56px; }
+  .rail-item{ width: 70px; height: 56px; }
   .content{ margin-left: 0; width: 100%; }
   .content-inner{ padding-bottom: 110px; }
   #toast{ bottom: 92px; }
@@ -503,7 +497,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     <div class="content-inner">
       <header class="topbar">
         <div class="topbar-left">
-          <h2 class="topbar-title">REVOLTS <b>CROWDSOURCE </b></h2>
+          <h2 class="topbar-title">REVOLTS <b>CROWDSOURCE AI</b></h2>
           <span class="sync-pill">
             <span class="material-symbols-rounded" id="syncIcon">cloud_off</span>
             <span id="syncLabel">Modo Local</span>
@@ -523,7 +517,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       <section class="view active" id="view-dashboard">
         <div class="view-head">
           <h1>Olá, <span class="accent" id="userName">Agente</span>.</h1>
-          <p class="muted">Suba de nivel e complete missoes seja o primeiro no rank, participe do nosso forum.</p>
+          <p class="muted">Valide dados de IA humano-no-loop inspirados no Google Crowdsource e suba de nível na rede.</p>
         </div>
 
         <div class="card hero">
@@ -765,7 +759,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
   </div>
 </div>
 
-<!-- POST DETAIL MODAL -->
+<!-- POST DETAIL -->
 <div class="overlay" id="postDetailOverlay" role="presentation">
   <div class="dialog dialog-wide" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
     <button class="dialog-close" id="postDetailClose" aria-label="Fechar">
@@ -798,7 +792,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       completed: 4,
       streak: 2,
       stats: { handwriting: 1, translation: 1, vision: 1, sentiment: 1 },
-      theme: document.documentElement.getAttribute('data-theme') || 'dark'
+      theme: document.documentElement.getAttribute('data-theme') || 'dark',
+      uid: null,
+      email: '',
+      photo: null,
+      board: []
     };
   }
 
@@ -807,13 +805,12 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     var raw = localStorage.getItem(LS_STATE);
     state = raw ? (JSON.parse(raw) || defaultState()) : defaultState();
   } catch (e) {
-    console.warn('[Revolts] Fallback local.', e);
     state = defaultState();
   }
-  // Campos de auth
   state.uid = state.uid || null;
   state.email = state.email || '';
   state.photo = state.photo || null;
+  state.board = state.board || [];
 
   function saveState() {
     try { localStorage.setItem(LS_STATE, JSON.stringify(state)); } catch (e) {}
@@ -835,11 +832,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
   ];
 
   var MOCK_AGENTS = [
-    { name: 'V. Kessler', xp: 9420, level: 63 },
-    { name: 'Nyx_07', xp: 7310, level: 49 },
-    { name: 'GhostByte', xp: 5680, level: 38 },
-    { name: 'Aria-9', xp: 4120, level: 28 },
-    { name: 'K4IRO', xp: 2870, level: 20 }
+    { name: 'V. Kessler', xp: 9420 },
+    { name: 'Nyx_07', xp: 7310 },
+    { name: 'GhostByte', xp: 5680 },
+    { name: 'Aria-9', xp: 4120 },
+    { name: 'K4IRO', xp: 2870 }
   ];
 
   var MOCK_FORUM_POSTS = [
@@ -863,10 +860,10 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
   var currentCategory = 'all';
   var isFirebaseReady = false;
   var pendingAction = null;
+  var missionSubmitting = false;
 
   function $(id) { return document.getElementById(id); }
 
-  /* ---------------- UTIL ---------------- */
   function initials(name) {
     if (!name) return 'A';
     var p = String(name).trim().split(/\s+/).slice(0, 2);
@@ -906,12 +903,10 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3200);
   }
 
-  /* ---------------- RENDER: dashboard/missões/ranking ---------------- */
   function renderDashboard() {
     var level = Math.floor(state.xp / 150) + 1;
     var xpInLevel = state.xp % 150;
     var circ = 2 * Math.PI * 42;
-
     if ($('userLevel')) $('userLevel').textContent = level;
     if ($('userXp')) $('userXp').textContent = state.xp;
     if ($('userName')) $('userName').textContent = state.name;
@@ -919,7 +914,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     if ($('chipStreak')) $('chipStreak').textContent = 'Streak ' + state.streak + 'x';
     if ($('ringProgress')) $('ringProgress').style.strokeDashoffset = (circ * (1 - xpInLevel / 150)).toFixed(2);
     if ($('xpBarFill')) $('xpBarFill').style.width = Math.round((xpInLevel / 150) * 100) + '%';
-
     if ($('statHandwriting')) $('statHandwriting').textContent = state.stats.handwriting;
     if ($('statTranslation')) $('statTranslation').textContent = state.stats.translation;
     if ($('statVision')) $('statVision').textContent = state.stats.vision;
@@ -961,7 +955,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       });
     } else {
       list = MOCK_AGENTS.map(function (a) {
-        return { name: a.name, xp: a.xp, level: a.level, photo: null, uid: null, self: false };
+        return { name: a.name, xp: a.xp, level: Math.floor(a.xp / 150) + 1, photo: null, uid: null, self: false };
       });
     }
     var me = {
@@ -1004,21 +998,17 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     var logged = !!state.uid;
     if ($('authGuest')) $('authGuest').hidden = logged;
     if ($('authUser')) $('authUser').hidden = !logged;
-    if ($('authBtnIcon')) $('authBtnIcon').textContent = logged ? 'person' : 'login';
 
-    // Photo do usuário no botão do topbar
     var btn = $('authBtn');
     if (btn) {
       btn.classList.remove('user-photo');
       btn.style.backgroundImage = '';
-      if (logged) {
-        if (state.photo) {
-          btn.classList.add('user-photo');
-          btn.style.backgroundImage = 'url("' + state.photo + '")';
-          if ($('authBtnIcon')) $('authBtnIcon').textContent = '';
-        } else {
-          if ($('authBtnIcon')) $('authBtnIcon').textContent = 'person';
-        }
+      if (logged && state.photo) {
+        btn.classList.add('user-photo');
+        btn.style.backgroundImage = 'url("' + state.photo + '")';
+        if ($('authBtnIcon')) $('authBtnIcon').textContent = '';
+      } else {
+        if ($('authBtnIcon')) $('authBtnIcon').textContent = logged ? 'person' : 'login';
       }
     }
 
@@ -1037,7 +1027,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     }
   }
 
-  /* ---------------- RENDER: fórum ---------------- */
   function renderForumBanner() {
     var b = $('forumBanner');
     if (!b) return;
@@ -1045,7 +1034,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     b.innerHTML =
       '<div class="forum-banner">' +
         '<span class="material-symbols-rounded">info</span>' +
-        '<span>Modo demonstração — os tópicos abaixo são exemplos. Configure o Firebase para liberar o fórum real.</span>' +
+        '<span>Conectando ao fórum… Os tópicos exibidos abaixo são exemplos enquanto a nuvem não responde.</span>' +
       '</div>';
   }
 
@@ -1058,7 +1047,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     var wrap = $('forumList');
     if (!wrap) return;
     var list = filteredPosts();
-
     if (!list.length) {
       wrap.innerHTML = '' +
         '<div class="forum-empty">' +
@@ -1068,7 +1056,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
         '</div>';
       return;
     }
-
     wrap.innerHTML = list.map(function (p) {
       var catLabel = ({ geral: 'Geral', duvidas: 'Dúvidas', dicas: 'Dicas', projetos: 'Projetos' })[p.category] || 'Geral';
       var av = p.authorPhoto
@@ -1153,7 +1140,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       replyForm;
   }
 
-  /* ---------------- AÇÕES ---------------- */
   function completeMission(id) {
     var m = null;
     for (var i = 0; i < missionsData.length; i++) {
@@ -1181,14 +1167,12 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     showToast('Missão validada! +' + m.xp + ' XP', 'verified');
   }
 
-  /* ---------------- NAVEGAÇÃO ---------------- */
   function goTo(view) {
     document.querySelectorAll('.view').forEach(function (v) { v.classList.toggle('active', v.id === 'view-' + view); });
     document.querySelectorAll('.rail-item[data-view]').forEach(function (b) { b.classList.toggle('active', b.dataset.view === view); });
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
   }
 
-  /* ---------------- TEMA ---------------- */
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     try { localStorage.setItem(LS_THEME, t); } catch (e) {}
@@ -1201,12 +1185,9 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   }
 
-  /* ---------------- MODAIS ---------------- */
   function openOverlay(id) { var el = $(id); if (el) el.classList.add('open'); }
   function closeOverlay(id) { var el = $(id); if (el) el.classList.remove('open'); }
 
-  /* Mission modal */
-  var missionSubmitting = false;
   function openMissionModal(id) {
     missionSubmitting = false;
     var m = null;
@@ -1225,7 +1206,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
 
     if (m.type === 'handwriting' || m.type === 'translation') {
       html += '' +
-        '<input type="text" id="apiInputVal" class="crowdsource-input" placeholder="Digite a resposta exata para testar o modelo..." autocomplete="off" />' +
+        '<input type="text" id="apiInputVal" class="crowdsource-input" placeholder="Digite a resposta exata..." autocomplete="off" />' +
         '<button class="btn btn-filled full" style="margin-top:8px;" data-submit="' + m.id + '">Submeter Resposta à API</button>';
     } else {
       var opts = m.type === 'vision'
@@ -1270,7 +1251,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     }
   }
 
-  /* Auth modal */
   function openAuth(pendingMessage) {
     if ($('authPendingMsg')) {
       if (pendingMessage) {
@@ -1283,7 +1263,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     openOverlay('authOverlay');
   }
 
-  /* New post modal */
   function openNewPost() {
     if (!state.uid) {
       pendingAction = 'new-post';
@@ -1291,7 +1270,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       return;
     }
     if (!isFirebaseReady) {
-      showToast('Configure o Firebase para publicar tópicos.', 'info');
+      showToast('Conectando ao Firebase, aguarde…', 'info');
       return;
     }
     if ($('postTitle')) $('postTitle').value = '';
@@ -1302,18 +1281,16 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
   }
 
   function submitNewPost() {
-    var title = ($('postTitle') || {}).value || '';
-    var body = ($('postBody') || {}).value || '';
+    var title = (($('postTitle') || {}).value || '').trim();
+    var body = (($('postBody') || {}).value || '').trim();
     var category = ($('postCategory') || {}).value || 'geral';
     var errEl = $('newPostError');
     if (errEl) errEl.textContent = '';
 
-    title = title.trim();
-    body = body.trim();
-
     if (title.length < 4) { if (errEl) errEl.textContent = 'Título muito curto (mín. 4 caracteres).'; return; }
     if (body.length < 10) { if (errEl) errEl.textContent = 'Mensagem muito curta (mín. 10 caracteres).'; return; }
-    if (!window.Revolts || !window.Revolts.hooks || typeof window.Revolts.hooks.createPost !== 'function') {
+
+    if (!window.Revolts.hooks.createPost) {
       if (errEl) errEl.textContent = 'Firebase não configurado.';
       return;
     }
@@ -1335,13 +1312,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       });
   }
 
-  /* Post detail */
   function openPostDetail(postId) {
     currentPostId = postId;
     renderPostDetail(postId);
     openOverlay('postDetailOverlay');
-
-    if (isFirebaseReady && window.Revolts.hooks.openPost) {
+    if (window.Revolts.hooks.openPost) {
       Promise.resolve(window.Revolts.hooks.openPost(postId)).catch(function (err) {
         console.warn('Erro ao abrir post:', err);
       });
@@ -1350,20 +1325,17 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
   function closePostDetail() {
     closeOverlay('postDetailOverlay');
     currentPostId = null;
-    if (isFirebaseReady && window.Revolts.hooks.closePost) {
+    if (window.Revolts.hooks.closePost) {
       try { window.Revolts.hooks.closePost(); } catch (e) {}
     }
   }
 
   function submitReply() {
     if (!currentPostId) return;
-    var body = ($('replyBody') || {}).value || '';
-    body = body.trim();
+    var body = (($('replyBody') || {}).value || '').trim();
     if (body.length < 2) { showToast('Escreva algo antes de responder.', 'warning'); return; }
-    if (!window.Revolts || !window.Revolts.hooks || typeof window.Revolts.hooks.createReply !== 'function') {
-      showToast('Firebase não configurado.', 'error');
-      return;
-    }
+    if (!window.Revolts.hooks.createReply) { showToast('Firebase não configurado.', 'error'); return; }
+
     var btn = $('replySubmit');
     if (btn) { btn.disabled = true; btn.innerHTML = 'Enviando...'; }
 
@@ -1381,7 +1353,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       });
   }
 
-  /* ---------------- API PÚBLICA (usada pelo Firebase) ---------------- */
   window.Revolts = {
     getState: function () {
       return {
@@ -1392,7 +1363,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
         stats: Object.assign({}, state.stats)
       };
     },
-
     applyRemote: function (d) {
       if (!d) return;
       if (typeof d.xp === 'number' && isFinite(d.xp)) state.xp = Math.max(0, Math.floor(d.xp));
@@ -1406,12 +1376,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       renderRanking();
       renderAuthUI();
     },
-
     applyLeaderboard: function (list) {
       state.board = Array.isArray(list) ? list : [];
+      saveState();
       renderRanking();
     },
-
     applyAuthUser: function (u) {
       if (u) {
         state.uid = u.uid || null;
@@ -1427,17 +1396,14 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       renderForumList();
       if (currentPostId) renderPostDetail(currentPostId);
     },
-
     applyForumPosts: function (posts) {
       forumPosts = Array.isArray(posts) ? posts : [];
       renderForumList();
     },
-
     applyForumReplies: function (postId, replies) {
       forumRepliesByPost[postId] = Array.isArray(replies) ? replies : [];
       if (currentPostId === postId) renderPostDetail(postId);
     },
-
     setSyncStatus: function (kind, label) {
       if ($('railSyncDot')) $('railSyncDot').className = 'sync-dot ' + kind;
       if ($('railSyncText')) $('railSyncText').textContent = (label || 'LOCAL').toUpperCase().slice(0, 12);
@@ -1448,12 +1414,10 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
           kind === 'connecting' ? 'cloud_sync' : 'cloud_off';
       }
     },
-
     setFirebaseReady: function (ready) {
       isFirebaseReady = !!ready;
       renderForumBanner();
     },
-
     hooks: {
       onProgressChanged: null,
       createPost: null,
@@ -1461,11 +1425,9 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       openPost: null,
       closePost: null
     },
-
     isLoggedIn: function () { return !!state.uid; }
   };
 
-  /* ---------------- BOOT ---------------- */
   function boot() {
     applyTheme(currentTheme());
     renderDashboard();
@@ -1475,35 +1437,23 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     renderForumBanner();
     renderForumList();
 
-    // Rail
     document.querySelectorAll('.rail-item[data-view]').forEach(function (b) {
       b.addEventListener('click', function () { goTo(b.dataset.view); });
     });
-
     document.querySelectorAll('[data-goto]').forEach(function (b) {
       b.addEventListener('click', function () { goTo(b.dataset.goto); });
     });
 
-    // Theme
     if ($('themeBtn')) $('themeBtn').addEventListener('click', function () {
       applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
     });
 
-    // Auth button
-    if ($('authBtn')) $('authBtn').addEventListener('click', function () {
-      if (state.uid) {
-        // Logado — abre direto no perfil
-        openAuth();
-      } else {
-        openAuth();
-      }
-    });
+    if ($('authBtn')) $('authBtn').addEventListener('click', function () { openAuth(); });
     if ($('authClose')) $('authClose').addEventListener('click', function () { closeOverlay('authOverlay'); });
     if ($('authOverlay')) $('authOverlay').addEventListener('click', function (e) {
       if (e.target === $('authOverlay')) closeOverlay('authOverlay');
     });
 
-    // Tabs de auth
     var authMode = 'login';
     document.querySelectorAll('.tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
@@ -1515,17 +1465,16 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       });
     });
 
-    // Form auth
     if ($('authForm')) $('authForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var errEl = $('authError'); if (errEl) errEl.textContent = '';
       if (!isFirebaseReady || !window.RevoltsAuth) {
-        if (errEl) errEl.textContent = 'Firebase não configurado. Adicione sua apiKey no arquivo.';
+        if (errEl) errEl.textContent = 'Firebase não configurado.';
         return;
       }
-      var email = ($('authEmail') || {}).value || '';
-      var pass = ($('authPass') || {}).value || '';
-      var name = ($('authName') || {}).value || '';
+      var email = (($('authEmail') || {}).value || '').trim();
+      var pass = (($('authPass') || {}).value || '');
+      var name = (($('authName') || {}).value || '').trim();
 
       if (!email || !pass) { if (errEl) errEl.textContent = 'Preencha e-mail e senha.'; return; }
       if (pass.length < 6) { if (errEl) errEl.textContent = 'Senha com no mínimo 6 caracteres.'; return; }
@@ -1543,7 +1492,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
           showToast('Bem-vindo, agente.', 'verified_user');
           if (pendingAction === 'new-post') {
             pendingAction = null;
-            setTimeout(openNewPost, 350);
+            setTimeout(openNewPost, 500);
           }
         })
         .catch(function (err) {
@@ -1554,11 +1503,10 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
         });
     });
 
-    // Google
     if ($('googleBtn')) $('googleBtn').addEventListener('click', function () {
       var errEl = $('authError'); if (errEl) errEl.textContent = '';
       if (!isFirebaseReady || !window.RevoltsAuth) {
-        if (errEl) errEl.textContent = 'Firebase não configurado. Adicione sua apiKey no arquivo.';
+        if (errEl) errEl.textContent = 'Firebase não configurado.';
         return;
       }
       var btn = $('googleBtn'); btn.disabled = true;
@@ -1568,7 +1516,7 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
           showToast('Login com Google concluído.', 'verified_user');
           if (pendingAction === 'new-post') {
             pendingAction = null;
-            setTimeout(openNewPost, 350);
+            setTimeout(openNewPost, 500);
           }
         })
         .catch(function (err) {
@@ -1577,7 +1525,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
         .then(function () { btn.disabled = false; });
     });
 
-    // Logout
     if ($('logoutBtn')) $('logoutBtn').addEventListener('click', function () {
       if (window.RevoltsAuth) {
         Promise.resolve(window.RevoltsAuth.signOutUser()).catch(function () {});
@@ -1586,13 +1533,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       showToast('Sessão encerrada.', 'logout');
     });
 
-    // Mission modal
     if ($('missionClose')) $('missionClose').addEventListener('click', function () { closeOverlay('missionOverlay'); });
     if ($('missionOverlay')) $('missionOverlay').addEventListener('click', function (e) {
       if (e.target === $('missionOverlay')) closeOverlay('missionOverlay');
     });
 
-    // Novo tópico
     if ($('newPostBtn')) $('newPostBtn').addEventListener('click', openNewPost);
     if ($('newPostClose')) $('newPostClose').addEventListener('click', function () { closeOverlay('newPostOverlay'); });
     if ($('newPostOverlay')) $('newPostOverlay').addEventListener('click', function (e) {
@@ -1600,13 +1545,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
     });
     if ($('postSubmit')) $('postSubmit').addEventListener('click', submitNewPost);
 
-    // Post detail
     if ($('postDetailClose')) $('postDetailClose').addEventListener('click', closePostDetail);
     if ($('postDetailOverlay')) $('postDetailOverlay').addEventListener('click', function (e) {
       if (e.target === $('postDetailOverlay')) closePostDetail();
     });
 
-    // ESC fecha qualquer modal aberto
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape') return;
       if ($('missionOverlay') && $('missionOverlay').classList.contains('open')) closeOverlay('missionOverlay');
@@ -1615,7 +1558,6 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       if ($('authOverlay') && $('authOverlay').classList.contains('open')) closeOverlay('authOverlay');
     });
 
-    // Delegated clicks
     document.addEventListener('click', function (ev) {
       var missionBtn = ev.target.closest('[data-mission]');
       if (missionBtn) { openMissionModal(missionBtn.dataset.mission); return; }
@@ -1655,10 +1597,11 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
       'auth/email-already-in-use': 'Este e-mail já está registrado.',
       'auth/weak-password': 'Senha muito fraca (mín. 6 caracteres).',
       'auth/popup-closed-by-user': 'Login cancelado.',
-      'auth/popup-blocked': 'Popup bloqueado. Permita popups.',
-      'auth/operation-not-allowed': 'Método desativado no Firebase Console.',
+      'auth/popup-blocked': 'Popup bloqueado. Permita popups para este site.',
+      'auth/operation-not-allowed': 'Provedor desativado no Firebase Console.',
       'auth/network-request-failed': 'Falha de rede.',
-      'auth/too-many-requests': 'Muitas tentativas. Aguarde.'
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns minutos.',
+      'auth/unauthorized-domain': 'Domínio não autorizado no Firebase Console.'
     };
     return map[code] || ('Erro: ' + (error && error.message ? error.message : 'desconhecido'));
   }
@@ -1673,41 +1616,22 @@ html[data-theme="light"] .profile-avatar{ color: #fff; }
 
 <!-- ============================================================
      CAMADA 2 — FIREBASE (v10 Modular via CDN)
+     Config já preenchida com o seu projeto revolts-b8c77
      ============================================================ -->
 <script type="module">
-/* ============================================================
-   ⚠️  COLE AQUI A CONFIGURAÇÃO DO SEU PROJETO FIREBASE
-   ============================================================ */
 const firebaseConfig = {
-  apiKey: "AIzaSyAAwOZScnWyjXXuLlLlY5cQRIRwHMS0-_0",
-  authDomain: "revolts-b8c77.firebaseapp.com",
-  projectId: "revolts-b8c77",
-  storageBucket: "revolts-b8c77.firebasestorage.app",
+  apiKey:            "AIzaSyAAwOZScnWyjXXuLlLlY5cQRIRwHMS0-_0",
+  authDomain:        "revolts-b8c77.firebaseapp.com",
+  projectId:         "revolts-b8c77",
+  storageBucket:     "revolts-b8c77.firebasestorage.app",
   messagingSenderId: "554456699154",
-  appId: "1:554456699154:web:f379970293c67b0fbf23cb",
-  measurementId: "G-BYH8V44QHD"
+  appId:             "1:554456699154:web:f379970293c67b0fbf23cb",
+  measurementId:     "G-BYH8V44QHD"
 };
-/* ============================================================ */
 
 (function bootstrapFirebase() {
   'use strict';
   const UI = window.Revolts;
-
-  const notConfigured =
-    !firebaseConfig.apiKey ||
-    firebaseConfig.apiKey.indexOf('COLE_') === 0 ||
-    firebaseConfig.projectId.indexOf('SEU_PROJETO') === 0;
-
-  if (notConfigured) {
-    UI.setSyncStatus('local', 'Modo Local');
-    UI.setFirebaseReady(false);
-    console.info(
-      '%c[Revolts] Firebase não configurado — MODO LOCAL.\n' +
-      'Preencha firebaseConfig no script type="module" para ativar login + fórum real.',
-      'color:#6750A4;font-weight:bold'
-    );
-    return;
-  }
 
   UI.setSyncStatus('connecting', 'Conectando...');
 
@@ -1743,7 +1667,7 @@ const firebaseConfig = {
       /* ---------- Escrita no Firestore (agente) ---------- */
       function pushAgent() {
         if (!currentUser) return Promise.resolve();
-        const s = window.Revolts.getState();
+        const s = UI.getState();
         const name = currentUser.displayName ||
           (currentUser.email ? currentUser.email.split('@')[0] : 'Agente');
         return setDoc(doc(db, 'agents', currentUser.uid), {
@@ -1765,10 +1689,9 @@ const firebaseConfig = {
           pushAgent().catch(function (e) { console.warn('[Revolts] pushAgent:', e); });
         }, 600);
       }
-
       UI.hooks.onProgressChanged = schedulePush;
 
-      /* ---------- API de auth ---------- */
+      /* ---------- API de autenticação ---------- */
       window.RevoltsAuth = {
         signInGoogle: () => signInWithPopup(auth, googleProvider),
         signInEmail: (email, pass) => signInWithEmailAndPassword(auth, email, pass),
@@ -1783,7 +1706,7 @@ const firebaseConfig = {
         signOutUser: () => signOut(auth)
       };
 
-      /* ---------- Fórum: createPost / createReply / openPost / closePost ---------- */
+      /* ---------- Fórum: criar post / responder ---------- */
       UI.hooks.createPost = async function ({ title, body, category }) {
         if (!currentUser) throw new Error('not-authenticated');
         const name = currentUser.displayName ||
@@ -1795,4 +1718,180 @@ const firebaseConfig = {
           authorId: currentUser.uid,
           authorName: name,
           authorPhoto: currentUser.photoURL || null,
-          replyCount: 
+          replyCount: 0,
+          createdAt: serverTimestamp()
+        });
+      };
+
+      UI.hooks.createReply = async function ({ postId, body }) {
+        if (!currentUser) throw new Error('not-authenticated');
+        const name = currentUser.displayName ||
+          (currentUser.email ? currentUser.email.split('@')[0] : 'Agente');
+        await addDoc(collection(db, 'forum_posts', postId, 'replies'), {
+          body: String(body).slice(0, 1000),
+          authorId: currentUser.uid,
+          authorName: name,
+          authorPhoto: currentUser.photoURL || null,
+          createdAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'forum_posts', postId), {
+          replyCount: increment(1)
+        });
+      };
+
+      /* ---------- Listener de posts do fórum ---------- */
+      const postsQuery = query(collection(db, 'forum_posts'), orderBy('createdAt', 'desc'), limit(50));
+      onSnapshot(postsQuery, function (qs) {
+        const list = [];
+        qs.forEach(function (d) {
+          const v = d.data() || {};
+          list.push({
+            id: d.id,
+            title: v.title || '',
+            body: v.body || '',
+            category: v.category || 'geral',
+            authorName: v.authorName || 'Agente',
+            authorPhoto: v.authorPhoto || null,
+            replyCount: v.replyCount || 0,
+            createdAt: v.createdAt && v.createdAt.toDate ? v.createdAt.toDate().toISOString() : null
+          });
+        });
+        UI.applyForumPosts(list);
+      }, function (err) {
+        console.warn('[Revolts] Listener do fórum falhou:', err);
+      });
+
+      /* ---------- Abrir post (listener de respostas) ---------- */
+      UI.hooks.openPost = function (postId) {
+        if (unsubReplies) { unsubReplies(); unsubReplies = null; }
+        const repliesQuery = query(
+          collection(db, 'forum_posts', postId, 'replies'),
+          orderBy('createdAt', 'asc'),
+          limit(100)
+        );
+        unsubReplies = onSnapshot(repliesQuery, function (qs) {
+          const list = [];
+          qs.forEach(function (d) {
+            const v = d.data() || {};
+            list.push({
+              id: d.id,
+              body: v.body || '',
+              authorName: v.authorName || 'Agente',
+              authorPhoto: v.authorPhoto || null,
+              createdAt: v.createdAt && v.createdAt.toDate ? v.createdAt.toDate().toISOString() : null
+            });
+          });
+          UI.applyForumReplies(postId, list);
+        }, function (err) {
+          console.warn('[Revolts] Listener de respostas falhou:', err);
+        });
+      };
+
+      UI.hooks.closePost = function () {
+        if (unsubReplies) { unsubReplies(); unsubReplies = null; }
+      };
+
+      /* ---------- Ranking global ---------- */
+      const boardQuery = query(collection(db, 'agents'), orderBy('xp', 'desc'), limit(50));
+      onSnapshot(boardQuery, function (qs) {
+        const list = [];
+        qs.forEach(function (d) {
+          const v = d.data() || {};
+          list.push({
+            uid: d.id,
+            displayName: v.displayName || 'Agente',
+            xp: Number(v.xp) || 0,
+            photoURL: v.photoURL || null
+          });
+        });
+        UI.applyLeaderboard(list);
+      }, function (err) {
+        console.warn('[Revolts] Listener do ranking falhou:', err);
+      });
+
+      /* ---------- Estado de autenticação ---------- */
+      onAuthStateChanged(auth, async function (user) {
+        if (unsubAgent) { unsubAgent(); unsubAgent = null; }
+        if (unsubReplies) { unsubReplies(); unsubReplies = null; }
+        clearTimeout(pushTimer);
+        currentUser = user;
+
+        if (!user) {
+          UI.applyAuthUser(null);
+          UI.setSyncStatus('local', 'Modo Local');
+          return;
+        }
+
+        const name = user.displayName ||
+          (user.email ? user.email.split('@')[0] : 'Agente');
+
+        UI.applyAuthUser({
+          uid: user.uid,
+          name: name,
+          photo: user.photoURL || null,
+          email: user.email || ''
+        });
+
+        UI.setSyncStatus('online', 'Sincronizado');
+
+        const ref = doc(db, 'agents', user.uid);
+        try {
+          const snap = await getDoc(ref);
+          const local = UI.getState();
+
+          if (!snap.exists()) {
+            await setDoc(ref, {
+              uid: user.uid,
+              displayName: name,
+              email: user.email || '',
+              photoURL: user.photoURL || '',
+              xp: local.xp,
+              level: local.level,
+              completed: local.completed,
+              streak: local.streak,
+              stats: local.stats,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            });
+          } else {
+            const cloud = snap.data() || {};
+            if (local.xp > (Number(cloud.xp) || 0)) {
+              await setDoc(ref, {
+                xp: local.xp,
+                level: local.level,
+                completed: local.completed,
+                streak: local.streak,
+                stats: local.stats,
+                updatedAt: serverTimestamp()
+              }, { merge: true });
+            }
+          }
+        } catch (err) {
+          console.warn('[Revolts] Verificação inicial do agente falhou:', err);
+        }
+
+        unsubAgent = onSnapshot(ref, function (snap) {
+          if (!snap.exists()) return;
+          const data = snap.data() || {};
+          UI.applyRemote({
+            xp: typeof data.xp === 'number' ? data.xp : undefined,
+            completed: typeof data.completed === 'number' ? data.completed : undefined,
+            streak: typeof data.streak === 'number' ? data.streak : undefined,
+            stats: data.stats,
+            displayName: data.displayName,
+            photoURL: data.photoURL
+          });
+        }, function (err) {
+          console.warn('[Revolts] Listener do agente falhou:', err);
+          UI.setSyncStatus('offline', 'Sem conexão');
+        });
+      });
+    })
+    .catch(function (err) {
+      console.error('[Revolts] Falha ao carregar Firebase via CDN:', err);
+      window.Revolts.setSyncStatus('offline', 'Offline');
+    });
+})();
+</script>
+</body>
+</html>
