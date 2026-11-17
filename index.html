@@ -1,83 +1,197 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Grid — Revolts</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-PGWQ2XGD"></script>
-    <script>
-    <script data-cfasync="false" src="https://afders.org/1/d05e557033e43bd174cbf0f24996f75a">
-        </script>
-     window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoFaucets — Lista de Faucets Gratuitas (Sem Investimento)</title>
+  <meta name="description" content="Diretório atualizado com as melhores faucets de criptomoedas gratuitas que pagam sem precisar investir dinheiro." />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <script data-cfasync="false" src="https://bicea.org/14/9a3326eb81befce57a7b9ecedde7238c"></script>
-    <script async="async" data-cfasync="false" src="https://bicea.org/21/49aad8a40bd8169df8356c5cc12133d5"></script>
-    <div id="container-49aad8a40bd8169df8356c5cc12133d5"></div>
-    <script>
-  atOptions = {
-    'key' : 'c424702e3f6d17018d1227c2caf49eb4',
-    'format' : 'iframe',
-    'height' : 300,
-    'width' : 160,
-    'params' : {}
-  };
-</script>
-<script src="https://bicea.org/22/c424702e3f6d17018d1227c2caf49eb4"></script>
-    <!-- Container WebGL / Three.js -->
-    <div id="canvas-container"></div>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
 
-    <!-- HUD (FPS / DIST / CHUNK) -->
-    <div id="hud">
-        <div>FPS <span id="fps-value">--</span></div>
-        <div>DIST <span id="dist-value">0.0</span>m</div>
-        <div>CHUNK <span id="chunk-value">0,0</span></div>
+  <!-- Cabeçalho -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-cyan-400">
+          ⚡ CryptoFaucets
+        </h1>
+        <p class="text-xs text-slate-400">Curadoria de faucets 100% gratuitas — sem depósito necessário</p>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/70 px-3 py-1.5 rounded-full border border-slate-700">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Lista verificada regularmente</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Espaço para Banner Superior (Ex: A-Ads iframe) -->
+  <div class="max-w-6xl mx-auto w-full px-4 pt-6">
+    <div class="w-full h-24 bg-slate-900 border border-dashed border-slate-700 rounded-lg flex items-center justify-center text-xs text-slate-500">
+      Espaço reservado para Banner (728x90 — ex: A-Ads)
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <main class="max-w-6xl mx-auto w-full px-4 py-8 flex-1">
+    
+    <!-- Barra de Busca e Filtros -->
+    <div class="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center mb-8">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Buscar faucet pelo nome ou descrição..." 
+        class="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-full md:w-80"
+      />
+
+      <div class="flex flex-wrap gap-2" id="filterButtons">
+        <button data-filter="ALL" class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-medium bg-cyan-500 text-slate-950 transition">Todas</button>
+        <button data-filter="BTC" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">BTC</button>
+        <button data-filter="LTC" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">LTC</button>
+        <button data-filter="DOGE" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">DOGE</button>
+        <button data-filter="SOL" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">SOL</button>
+        <button data-filter="FaucetPay" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">FaucetPay</button>
+      </div>
     </div>
 
-    <!-- Interface principal (header/nav/instruções/footer) -->
-    <div class="ui-overlay">
-        <header>
-            <h1>THE GRID</h1>
-            <nav>
-                <a href="index.html">Início</a>
-                <a href="pages/sobre/">Sobre</a>
-                <a href="pages/termos/">Termos de Uso</a>
-                <a href="pages/privacidade/">Privacidade</a>
-                <a href="pages/contato/">Contato</a>
-                <a href="https://arwf.org/4/06927d798ad251b3b81e5de484706d5f" target="_blank" rel="noopener noreferrer">Apoiar / Patrocinador</a>
-            </nav>
-        </header>
-
-        <div class="instructions" id="instructions">
-            <p>CLIQUE PARA ENTRAR NA EXPERIÊNCIA</p>
-            <p class="hint">Use W, A, S, D ou Setas para navegar | Mouse para olhar | Espaço para pular</p>
-        </div>
-
-        <footer>
-            <p>© Revolts.com.br — Todos os direitos reservados.</p>
-        </footer>
+    <!-- Grid de Cards -->
+    <div id="faucetGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Os cards serão injetados aqui via JavaScript -->
     </div>
 
-    <!-- UI exclusiva de mobile -->
-    <div id="mobile-ui" class="hidden">
-        <div id="joystick-base">
-            <div id="joystick-knob"></div>
-        </div>
-        <button id="jump-button" type="button">JUMP</button>
+    <!-- Mensagem caso nenhum filtro retorne resultado -->
+    <div id="emptyState" class="hidden text-center py-16 text-slate-500">
+      Nenhuma faucet encontrada com esse filtro.
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-    <script type="module" src="js/main.js"></script>
+  </main>
+
+  <!-- Rodapé com Aviso de Transparência -->
+  <footer class="border-t border-slate-800 bg-slate-900/50 mt-12">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-center text-xs text-slate-500 space-y-2">
+      <p>
+        <strong>Aviso de Transparência:</strong> Este site atua apenas como um diretório gratuito. Alguns links contêm códigos de indicação (afiliado), o que ajuda a manter o projeto online sem nenhum custo para você.
+      </p>
+      <p>Nunca invista dinheiro em faucets que prometem retornos garantidos.</p>
+    </div>
+  </footer>
+
+  <!-- Script de Carregamento e Filtros -->
+  <script>
+    let allFaucets = [];
+    let currentFilter = 'ALL';
+
+    async function loadFaucets() {
+      try {
+        const response = await fetch('./faucets.json');
+        allFaucets = await response.json();
+        renderFaucets();
+      } catch (error) {
+        document.getElementById('faucetGrid').innerHTML = `
+          <div class="col-span-full text-center text-red-400 py-10">
+            Erro ao carregar faucets.json. Verifique se o arquivo está na mesma pasta do index.html.
+          </div>
+        `;
+      }
+    }
+
+    function renderFaucets() {
+      const grid = document.getElementById('faucetGrid');
+      const emptyState = document.getElementById('emptyState');
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+      const filtered = allFaucets.filter(item => {
+        const matchesSearch = item.nome.toLowerCase().includes(searchTerm) || 
+                              item.descricao.toLowerCase().includes(searchTerm);
+        
+        if (currentFilter === 'ALL') return matchesSearch;
+        if (currentFilter === 'FaucetPay') return matchesSearch && item.pagamento.toLowerCase().includes('faucetpay');
+        return matchesSearch && item.moedas.includes(currentFilter);
+      });
+
+      grid.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      filtered.forEach(faucet => {
+        const isPaying = faucet.status === 'pagando';
+        const statusBadge = isPaying
+          ? `<span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Pagando</span>`
+          : `<span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Atenção</span>`;
+
+        const coinsHtml = faucet.moedas.map(m => 
+          `<span class="px-2 py-0.5 text-[11px] rounded bg-slate-800 text-cyan-300 font-mono">${m}</span>`
+        ).join('');
+
+        const card = `
+          <article class="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl p-5 flex flex-col justify-between transition shadow-sm">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <h2 class="text-lg font-semibold text-white">${faucet.nome}</h2>
+                ${statusBadge}
+              </div>
+              <p class="text-sm text-slate-400 mb-4 leading-relaxed">${faucet.descricao}</p>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap gap-1.5 mb-4">
+                ${coinsHtml}
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 border-t border-slate-800 pt-3 mb-4">
+                <div>
+                  <span class="block text-slate-500">Timer</span>
+                  <span class="text-slate-200 font-medium">${faucet.timer}</span>
+                </div>
+                <div>
+                  <span class="block text-slate-500">Pagamento</span>
+                  <span class="text-slate-200 font-medium">${faucet.pagamento}</span>
+                </div>
+              </div>
+
+              <a 
+                href="${faucet.link_afiliado}" 
+                target="_blank" 
+                rel="noopener noreferrer nofollow"
+                class="block w-full text-center py-2.5 px-4 rounded-lg font-semibold text-sm transition ${
+                  isPaying 
+                    ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950' 
+                    : 'bg-slate-800 text-slate-500 pointer-events-none'
+                }"
+              >
+                ${isPaying ? 'Acessar Faucet ↗' : 'Indisponível'}
+              </a>
+            </div>
+          </article>
+        `;
+        grid.insertAdjacentHTML('beforeend', card);
+      });
+    }
+
+    // Eventos de filtro
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('bg-cyan-500', 'text-slate-950');
+          b.classList.add('bg-slate-800', 'text-slate-300');
+        });
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+        btn.classList.add('bg-cyan-500', 'text-slate-950');
+        
+        currentFilter = btn.dataset.filter;
+        renderFaucets();
+      });
+    });
+
+    // Evento de busca
+    document.getElementById('searchInput').addEventListener('input', renderFaucets);
+
+    // Inicializa
+    loadFaucets();
+  </script>
 </body>
 </html>
