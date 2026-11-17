@@ -1,0 +1,38 @@
+[
+  {
+    "nome": "FreeBitco.in",
+    "descricao": "Faucet clássica de Bitcoin com reivindicação a cada hora e sistema de pontos de recompensa.",
+    "moedas": ["BTC"],
+    "pagamento": "Direto na Carteira",
+    "timer": "60 min",
+    "status": "pagando",
+    "link_afiliado": "https://freebitco.in/?r=SEU_ID_AQUI"
+  },
+  {
+    "nome": "FireFaucet",
+    "descricao": "Auto-faucet multi-moedas com tarefas diárias, PTC e bônus de nível sem precisar investir.",
+    "moedas": ["BTC", "ETH", "DOGE", "LTC", "SOL", "USDT"],
+    "pagamento": "FaucetPay",
+    "timer": "Auto / 30 min",
+    "status": "pagando",
+    "link_afiliado": "https://firefaucet.win/ref/SEU_ID_AQUI"
+  },
+  {
+    "nome": "Vie Faucet",
+    "descricao": "Faucet rápida com pagamentos instantâneos via FaucetPay e anúncios PTC leves.",
+    "moedas": ["BTC", "LTC", "DOGE", "SOL", "TRX"],
+    "pagamento": "FaucetPay",
+    "timer": "4 min",
+    "status": "pagando",
+    "link_afiliado": "https://viefaucet.com/?r=SEU_ID_AQUI"
+  },
+  {
+    "nome": "Exemplo Faucet Pausada",
+    "descricao": "Plataforma em manutenção ou sem saldo no momento. Aguardando reposição.",
+    "moedas": ["LTC", "DOGE"],
+    "pagamento": "FaucetPay",
+    "timer": "5 min",
+    "status": "atencao",
+    "link_afiliado": "#"
+  }
+]
