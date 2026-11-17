@@ -12,12 +12,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY_AQUI", // Coloque sua apiKey real do Firebase
+  apiKey: "AIzaSyAAwOZScnWyjXXuLlLlY5cQRIRwHMS0-_0",
   authDomain: "revolts-b8c77.firebaseapp.com",
   projectId: "revolts-b8c77",
-  storageBucket: "revolts-b8c77.appspot.com",
+  storageBucket: "revolts-b8c77.firebasestorage.app",
   messagingSenderId: "554456699154",
-  appId: "1:554456699154:web:f379970293c67b0fbf23cb"
+  appId: "1:554456699154:web:f379970293c67b0fbf23cb",
+  measurementId: "G-BYH8V44QHD"
 };
 
 const app = initializeApp(firebaseConfig);
